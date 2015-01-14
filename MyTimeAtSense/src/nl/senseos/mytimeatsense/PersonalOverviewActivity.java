@@ -45,8 +45,8 @@ public class PersonalOverviewActivity extends Activity {
 	private TextView status;
 	private View mProgressView;
 	private View mContentView;
-	private long REPEAT_INTEVAL_MINS_BLE = 1;
-	private long REPEAT_INTEVAL_MINS_UPLOAD = 5;
+	private long REPEAT_INTEVAL_MINS_BLE = 5;
+	private long REPEAT_INTEVAL_MINS_UPLOAD = 45;
 
 	private AlarmManager alarmMgr;	
 	private SharedPreferences statusPrefs;
@@ -168,12 +168,12 @@ public class PersonalOverviewActivity extends Activity {
 				REPEAT_INTEVAL_MINS_BLE * 60 * 1000, BlePendingIntent);
 
 		GlobalUpdateServiceIntent = new Intent(this, GlobalUpdateAlarmReceiver.class);
-		BlePendingIntent = PendingIntent.getBroadcast(this, 2, GlobalUpdateServiceIntent,
+		GlobalUpdatePendingIntent = PendingIntent.getBroadcast(this, 2, GlobalUpdateServiceIntent,
 				0);
 
 		alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
 				SystemClock.elapsedRealtime() + (1 * 1000),
-				REPEAT_INTEVAL_MINS_UPLOAD * 60 * 1000, BlePendingIntent);
+				REPEAT_INTEVAL_MINS_UPLOAD * 60 * 1000, GlobalUpdatePendingIntent);
 		
 		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);

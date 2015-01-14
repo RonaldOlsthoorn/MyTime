@@ -109,8 +109,7 @@ public class LocalUpdateService extends IntentService {
 					.get(Calendar.WEEK_OF_YEAR)) {
 
 				prefsEditor.putLong(Prefs.STATUS_TIME_WEEK, 0);
-			}
-			
+			}	
 		}
 
 		prefsEditor.putBoolean(Prefs.STATUS_IN_OFFICE, detected);
