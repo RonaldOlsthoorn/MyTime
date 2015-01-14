@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">My Time at Sense</string>
+    <string name="title_activity_personal_overview">Personal overview</string>
+    <string name="login">Login</string>
+    <string name="logout">Logout</string>
+    <string name="ble_not_supported">Bluetooth low energy not supported</string>
+    <string name="error_incorrect_password">Incorrect password</string>
+    <string name="error_register_sensor_fail">Unable to register device</string>
+
+</resources>
