@@ -9,6 +9,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -593,8 +595,6 @@ public class CommonSenseAdapter {
 		JSONObject postData = new JSONObject();
 		postData.put("data", data);
 
-		Log.d(TAG, "Postdata: " + postData.toString(1));
-
 		Map<String, String> response = request(context, url, postData, cookie);
 
 		// check response code
@@ -672,7 +672,7 @@ public class CommonSenseAdapter {
 		return result;
 	}
 
-	public JSONObject fetchBeaconData() throws IOException, JSONException {
+	public JSONObject fetchTotalTime() throws IOException, JSONException {
 
 		if (null == sAuthPrefs) {
 			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
@@ -703,8 +703,132 @@ public class CommonSenseAdapter {
 
 			// parse response and store the list
 			JSONObject content = new JSONObject(response.get(RESPONSE_CONTENT));
-			
-			if(content.getJSONArray("data").length()==0){
+
+			if (content.getJSONArray("data").length() == 0) {
+				return null;
+			}
+			JSONArray dataList = content.getJSONArray("data");
+			return dataList.getJSONObject(0);
+		}
+
+		else {
+			Log.w(TAG, "responsecode: " + responseCode);
+			throw new IOException("Incorrect response from CommonSense: "
+					+ responseCode);
+		}
+	}
+
+	public JSONObject fetchTimeToday() throws IOException, JSONException {
+
+		GregorianCalendar cCurrent = new GregorianCalendar();
+		
+		GregorianCalendar todayMidnight = new GregorianCalendar(
+				cCurrent.get(Calendar.YEAR),
+				cCurrent.get(Calendar.MONTH),
+				cCurrent.get(Calendar.DAY_OF_MONTH), 0, 0);
+		
+		todayMidnight.set(GregorianCalendar.HOUR, 0);
+		todayMidnight.set(GregorianCalendar.MINUTE, 0);
+		todayMidnight.set(GregorianCalendar.SECOND, 0);
+		
+		if (null == sAuthPrefs) {
+			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
+					Context.MODE_PRIVATE);
+		}
+
+		String cookie = sAuthPrefs.getString(Auth.LOGIN_COOKIE, null);
+		String beaconSensorString = sAuthPrefs.getString(Sensors.BEACON_SENSOR,
+				null);
+
+		JSONObject beaconSensor = new JSONObject(beaconSensorString);
+
+		Log.d(TAG, "todayMidnight: "+todayMidnight.getTimeInMillis() / 1000);
+		
+		int sensorId = (int) beaconSensor.getLong("id");
+		String url = Url.SENSORS_URL + "/" + sensorId + "/data"
+				+ "?end_date=" + todayMidnight.getTimeInMillis() / 1000
+				+ "&last=true";
+
+		Map<String, String> response = request(context, url, null, cookie);
+		String responseCode = response.get(RESPONSE_CODE);
+
+		JSONObject result = new JSONObject();
+
+		if ("403".equalsIgnoreCase(responseCode)) {
+			Log.w(TAG,
+					"CommonSense authentication while downloading data Response: forbidden!");
+
+		}
+		if ("200".equals(responseCode)) {
+			Log.w(TAG, "Download successful: " + responseCode);
+
+			// parse response and store the list
+			JSONObject content = new JSONObject(response.get(RESPONSE_CONTENT));
+
+			if (content.getJSONArray("data").length() == 0) {
+				return null;
+			}
+			JSONArray dataList = content.getJSONArray("data");
+			return dataList.getJSONObject(0);
+		}
+
+		else {
+			Log.w(TAG, "responsecode: " + responseCode);
+			throw new IOException("Incorrect response from CommonSense: "
+					+ responseCode);
+		}
+	}
+
+	public JSONObject fetchTimeThisWeek() throws IOException, JSONException {
+
+		GregorianCalendar cCurrent = new GregorianCalendar();
+		
+		GregorianCalendar c = new GregorianCalendar(
+				cCurrent.get(Calendar.YEAR),
+				cCurrent.get(Calendar.MONTH),
+				cCurrent.get(Calendar.DAY_OF_MONTH), 0, 0);
+		c.set(Calendar.DAY_OF_WEEK, 0);
+		
+		GregorianCalendar startWeekMidnight = new GregorianCalendar();
+		startWeekMidnight.set(GregorianCalendar.DAY_OF_WEEK, 1);
+		startWeekMidnight.set(GregorianCalendar.HOUR, 0);
+		startWeekMidnight.set(GregorianCalendar.MINUTE, 0);
+		startWeekMidnight.set(GregorianCalendar.SECOND, 0);
+
+		if (null == sAuthPrefs) {
+			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
+					Context.MODE_PRIVATE);
+		}
+
+		String cookie = sAuthPrefs.getString(Auth.LOGIN_COOKIE, null);
+		String beaconSensorString = sAuthPrefs.getString(Sensors.BEACON_SENSOR,
+				null);
+
+		JSONObject beaconSensor = new JSONObject(beaconSensorString);
+
+		Log.d(TAG, "startWeekMidnight: "+startWeekMidnight.getTimeInMillis() / 1000);
+		
+		int sensorId = (int) beaconSensor.getLong("id");
+		String url = Url.SENSORS_URL + "/" + sensorId + "/data" + "?end_date="
+				+ startWeekMidnight.getTimeInMillis() / 1000 + "&last=true";
+
+		Map<String, String> response = request(context, url, null, cookie);
+		String responseCode = response.get(RESPONSE_CODE);
+
+		JSONObject result = new JSONObject();
+
+		if ("403".equalsIgnoreCase(responseCode)) {
+			Log.w(TAG,
+					"CommonSense authentication while downloading data Response: forbidden!");
+
+		}
+		if ("200".equals(responseCode)) {
+			Log.w(TAG, "Download successful: " + responseCode);
+
+			// parse response and store the list
+			JSONObject content = new JSONObject(response.get(RESPONSE_CONTENT));
+
+			if (content.getJSONArray("data").length() == 0) {
 				return null;
 			}
 			JSONArray dataList = content.getJSONArray("data");

@@ -114,7 +114,7 @@ public class BluetoothLeScanService extends Service {
 				Log.v(TAG, "Beacon detected");
 				beaconFound = true;
 			}
-			Log.d("PDU", bytesToHex(PDU));
+//			Log.d("PDU", bytesToHex(PDU));
 		}
 	};
 

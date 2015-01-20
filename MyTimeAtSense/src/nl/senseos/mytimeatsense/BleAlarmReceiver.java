@@ -1,4 +1,4 @@
-package nl.senseos.mytimeatsense;
+ package nl.senseos.mytimeatsense;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
