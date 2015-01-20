@@ -595,8 +595,6 @@ public class CommonSenseAdapter {
 		JSONObject postData = new JSONObject();
 		postData.put("data", data);
 
-		Log.d(TAG, "Postdata: " + postData.toString(1));
-
 		Map<String, String> response = request(context, url, postData, cookie);
 
 		// check response code
@@ -722,11 +720,17 @@ public class CommonSenseAdapter {
 
 	public JSONObject fetchTimeToday() throws IOException, JSONException {
 
-		GregorianCalendar todayMidnight = new GregorianCalendar();
+		GregorianCalendar cCurrent = new GregorianCalendar();
+		
+		GregorianCalendar todayMidnight = new GregorianCalendar(
+				cCurrent.get(Calendar.YEAR),
+				cCurrent.get(Calendar.MONTH),
+				cCurrent.get(Calendar.DAY_OF_MONTH), 0, 0);
+		
 		todayMidnight.set(GregorianCalendar.HOUR, 0);
 		todayMidnight.set(GregorianCalendar.MINUTE, 0);
 		todayMidnight.set(GregorianCalendar.SECOND, 0);
-
+		
 		if (null == sAuthPrefs) {
 			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
 					Context.MODE_PRIVATE);
@@ -738,9 +742,11 @@ public class CommonSenseAdapter {
 
 		JSONObject beaconSensor = new JSONObject(beaconSensorString);
 
+		Log.d(TAG, "todayMidnight: "+todayMidnight.getTimeInMillis() / 1000);
+		
 		int sensorId = (int) beaconSensor.getLong("id");
 		String url = Url.SENSORS_URL + "/" + sensorId + "/data"
-				+ "?start_date=" + todayMidnight.getTimeInMillis() / 1000
+				+ "?end_date=" + todayMidnight.getTimeInMillis() / 1000
 				+ "&last=true";
 
 		Map<String, String> response = request(context, url, null, cookie);
@@ -775,6 +781,14 @@ public class CommonSenseAdapter {
 
 	public JSONObject fetchTimeThisWeek() throws IOException, JSONException {
 
+		GregorianCalendar cCurrent = new GregorianCalendar();
+		
+		GregorianCalendar c = new GregorianCalendar(
+				cCurrent.get(Calendar.YEAR),
+				cCurrent.get(Calendar.MONTH),
+				cCurrent.get(Calendar.DAY_OF_MONTH), 0, 0);
+		c.set(Calendar.DAY_OF_WEEK, 0);
+		
 		GregorianCalendar startWeekMidnight = new GregorianCalendar();
 		startWeekMidnight.set(GregorianCalendar.DAY_OF_WEEK, 1);
 		startWeekMidnight.set(GregorianCalendar.HOUR, 0);
@@ -792,6 +806,8 @@ public class CommonSenseAdapter {
 
 		JSONObject beaconSensor = new JSONObject(beaconSensorString);
 
+		Log.d(TAG, "startWeekMidnight: "+startWeekMidnight.getTimeInMillis() / 1000);
+		
 		int sensorId = (int) beaconSensor.getLong("id");
 		String url = Url.SENSORS_URL + "/" + sensorId + "/data" + "?end_date="
 				+ startWeekMidnight.getTimeInMillis() / 1000 + "&last=true";

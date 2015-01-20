@@ -102,21 +102,33 @@ public class GlobalUpdateService extends IntentService {
 				return;
 			}
 			JSONObject value = new JSONObject(response.getString("value"));
-			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME,
-					value.getLong("total_time"));
+
+			long totalTime = value.getLong("total_time");
+			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, totalTime);
 			statusEditor.putBoolean(Prefs.STATUS_IN_OFFICE,
 					value.getBoolean("status"));
 			statusEditor.putLong(Prefs.STATUS_TIMESTAMP,
 					System.currentTimeMillis() / 1000);
+
 			response = cs.fetchTimeToday();
+			if (response == null) {
+				return;
+			}
 			value = new JSONObject(response.getString("value"));
+
 			statusEditor.putLong(Prefs.STATUS_TIME_TODAY,
-					value.getLong("total_time"));
+					totalTime - value.getLong("total_time"));
 			response = cs.fetchTimeThisWeek();
+			if (response == null) {
+				return;
+			}
 			value = new JSONObject(response.getString("value"));
+
 			statusEditor.putLong(Prefs.STATUS_TIME_WEEK,
-					value.getLong("total_time"));
+					totalTime - value.getLong("total_time"));
+
 			statusEditor.commit();
+
 		} catch (JSONException | IOException e) {
 			e.printStackTrace();
 		}
@@ -135,8 +147,9 @@ public class GlobalUpdateService extends IntentService {
 					Prefs.STATUS_IN_OFFICE, false);
 			long localTs = statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
 
-			// no data points exist, upload local value as is
 			long newTotalTime = 0;
+
+			// no data points present on CS, upload local value as is
 			if (response == null) {
 				newTotalTime = computeIncrement(false, 0);
 			} else {
@@ -145,7 +158,6 @@ public class GlobalUpdateService extends IntentService {
 				JSONObject value = new JSONObject(response.getString("value"));
 				boolean lastUpdateStatus = value.getBoolean("status");
 				long lastUpdateTotalTime = value.getLong("total_time");
-				Log.d(TAG, "lastUpdateTotalTime: " + lastUpdateTotalTime);
 
 				// compute new total time
 				newTotalTime = lastUpdateTotalTime
@@ -161,31 +173,35 @@ public class GlobalUpdateService extends IntentService {
 
 			// fetch latest status and update the status in SharedPreferences
 			response = cs.fetchTotalTime();
+			if (response == null) {
+				return;
+			}
 			JSONObject value = new JSONObject(response.getString("value"));
-			long updateTotalTime = value.getLong("total_time");
-			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, updateTotalTime);
+
+			long totalTime = value.getLong("total_time");
+			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, totalTime);
 			statusEditor.putBoolean(Prefs.STATUS_IN_OFFICE,
 					value.getBoolean("status"));
 			statusEditor.putLong(Prefs.STATUS_TIMESTAMP,
 					System.currentTimeMillis() / 1000);
+
 			response = cs.fetchTimeToday();
-
 			if (response == null) {
-				statusEditor.putLong(Prefs.STATUS_TIME_TODAY, updateTotalTime);
-			} else {
-				value = new JSONObject(response.getString("value"));
-				statusEditor.putLong(Prefs.STATUS_TIME_TODAY,
-						value.getLong("total_time"));
+				return;
 			}
+			value = new JSONObject(response.getString("value"));
 
+			statusEditor.putLong(Prefs.STATUS_TIME_TODAY,
+					totalTime - value.getLong("total_time"));
 			response = cs.fetchTimeThisWeek();
 			if (response == null) {
-				statusEditor.putLong(Prefs.STATUS_TIME_WEEK, updateTotalTime);
-			} else {
-				value = new JSONObject(response.getString("value"));
-				statusEditor.putLong(Prefs.STATUS_TIME_WEEK,
-						value.getLong("total_time"));
+				return;
 			}
+			value = new JSONObject(response.getString("value"));
+
+			statusEditor.putLong(Prefs.STATUS_TIME_WEEK,
+					totalTime - value.getLong("total_time"));
+
 			statusEditor.commit();
 
 		} catch (JSONException | IOException e) {
@@ -211,8 +227,6 @@ public class GlobalUpdateService extends IntentService {
 		}
 
 		log.moveToFirst();
-		Log.d(TAG,
-				"Count: " + log.getCount() + " position: " + log.getPosition());
 		while (log.getPosition() < log.getCount()) {
 
 			leader = log.getInt(2) > 0;
@@ -226,7 +240,6 @@ public class GlobalUpdateService extends IntentService {
 			followerTs = leaderTs;
 			log.moveToNext();
 		}
-		Log.d(TAG, "res: " + res);
 		return res;
 	}
 }

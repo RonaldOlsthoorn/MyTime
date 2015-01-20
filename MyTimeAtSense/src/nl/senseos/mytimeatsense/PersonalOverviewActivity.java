@@ -45,17 +45,16 @@ public class PersonalOverviewActivity extends Activity {
 	private TextView status;
 	private View mProgressView;
 	private View mContentView;
-	private long REPEAT_INTEVAL_MINS_BLE = 5;
-	private long REPEAT_INTEVAL_MINS_UPLOAD = 45;
+	private long REPEAT_INTEVAL_MINS_BLE = 1;
+	private long REPEAT_INTEVAL_MINS_UPLOAD = 5;
 
-	private AlarmManager alarmMgr;	
+	private AlarmManager alarmMgr;
 	private SharedPreferences statusPrefs;
 
 	private SharedPreferences sAuthPrefs;
 	private String mUsername;
 	private String mPassword;
-	private Handler timerHandler = new Handler();
-	
+
 	private Intent BleServiceIntent;
 	private Intent GlobalUpdateServiceIntent;
 	private PendingIntent GlobalUpdatePendingIntent;
@@ -65,13 +64,12 @@ public class PersonalOverviewActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_personal_overview);
-		
+
 		// check if password/username is set
 		if (null == sAuthPrefs) {
 			sAuthPrefs = getSharedPreferences(Auth.PREFS_CREDS,
 					Context.MODE_PRIVATE);
 		}
-		
 
 		mUsername = sAuthPrefs.getString(Auth.PREFS_CREDS_UNAME, null);
 		mPassword = sAuthPrefs.getString(Auth.PREFS_CREDS_PASSWORD, null);
@@ -126,23 +124,24 @@ public class PersonalOverviewActivity extends Activity {
 		mContentView = findViewById(R.personal_overview.content);
 
 		BleServiceIntent = new Intent(this, BleAlarmReceiver.class);
-		BlePendingIntent = PendingIntent.getBroadcast(this, 2, BleServiceIntent, 0);
+		BlePendingIntent = PendingIntent.getBroadcast(this, 2,
+				BleServiceIntent, 0);
 
 		alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
 				SystemClock.elapsedRealtime() + (1 * 1000),
 				REPEAT_INTEVAL_MINS_BLE * 60 * 1000, BlePendingIntent);
 
-		GlobalUpdateServiceIntent = new Intent(this, GlobalUpdateAlarmReceiver.class);
-		GlobalUpdatePendingIntent = PendingIntent.getBroadcast(this, 2, GlobalUpdateServiceIntent,
-				0);
-		
+		GlobalUpdateServiceIntent = new Intent(this,
+				GlobalUpdateAlarmReceiver.class);
+		GlobalUpdatePendingIntent = PendingIntent.getBroadcast(this, 2,
+				GlobalUpdateServiceIntent, 0);
 
 		alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
 				SystemClock.elapsedRealtime() + (1 * 1000),
-				REPEAT_INTEVAL_MINS_UPLOAD * 60 * 1000, GlobalUpdatePendingIntent);
+				REPEAT_INTEVAL_MINS_UPLOAD * 60 * 1000,
+				GlobalUpdatePendingIntent);
 
-		updateTimerThread.run();
 	}
 
 	@Override
@@ -160,26 +159,27 @@ public class PersonalOverviewActivity extends Activity {
 		}
 		
 		BleServiceIntent = new Intent(this, BleAlarmReceiver.class);
-		BlePendingIntent = PendingIntent.getBroadcast(this, 2, BleServiceIntent, 0);
+		BlePendingIntent = PendingIntent.getBroadcast(this, 2,
+				BleServiceIntent, 0);
 
 		alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
 				SystemClock.elapsedRealtime() + (1 * 1000),
 				REPEAT_INTEVAL_MINS_BLE * 60 * 1000, BlePendingIntent);
 
-		GlobalUpdateServiceIntent = new Intent(this, GlobalUpdateAlarmReceiver.class);
-		GlobalUpdatePendingIntent = PendingIntent.getBroadcast(this, 2, GlobalUpdateServiceIntent,
-				0);
+		GlobalUpdateServiceIntent = new Intent(this,
+				GlobalUpdateAlarmReceiver.class);
+		GlobalUpdatePendingIntent = PendingIntent.getBroadcast(this, 2,
+				GlobalUpdateServiceIntent, 0);
 
 		alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
 				SystemClock.elapsedRealtime() + (1 * 1000),
-				REPEAT_INTEVAL_MINS_UPLOAD * 60 * 1000, GlobalUpdatePendingIntent);
-		
+				REPEAT_INTEVAL_MINS_UPLOAD * 60 * 1000,
+				GlobalUpdatePendingIntent);
+
 		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);
-		
-		updateTimerThread.run();
-		
+
 		super.onActivityResult(requestCode, resultCode, data);
 	}
 
@@ -190,79 +190,9 @@ public class PersonalOverviewActivity extends Activity {
 		return true;
 	}
 	
-	@Override
-	public void onResume() {
-	    super.onResume();  // Always call the superclass method first
-
-	    
-	    statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
-				Context.MODE_PRIVATE);
-
-		today = (TextView) findViewById(R.personal_overview.today);
-		thisWeek = (TextView) findViewById(R.personal_overview.this_week);
-		thisLife = (TextView) findViewById(R.personal_overview.this_life);
-		status = (TextView) findViewById(R.personal_overview.status);
-
-		mProgressView = findViewById(R.personal_overview.fetch_progress);
-		mContentView = findViewById(R.personal_overview.content);
-	}
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Handle action bar item clicks here. The action bar will
-		// automatically handle clicks on the Home/Up button, so long
-		// as you specify a parent activity in AndroidManifest.xml.
-		int id = item.getItemId();
-		if (id == R.personal_overview.login) {
-			Intent requestCredsIntent = new Intent(this, LoginActivity.class);
-			startActivityForResult(requestCredsIntent, REQUEST_CREDENTIALS);
-			return true;
-		}
-		if (id == R.personal_overview.logout) {
-
-			Editor authEditor = sAuthPrefs.edit();
-			authEditor.putString(Auth.PREFS_CREDS_UNAME, null);
-			authEditor.putString(Auth.PREFS_CREDS_PASSWORD, null);
-			authEditor.commit();
-
-			SharedPreferences sSensorPrefs = getSharedPreferences(
-					Sensors.PREFS_SENSORS, Context.MODE_PRIVATE);
-			Editor sensorEditor = sAuthPrefs.edit();
-			sensorEditor.putLong(Sensors.SENSOR_LIST_COMPLETE_TIME, 0);
-			sensorEditor.putString(Sensors.SENSOR_LIST_COMPLETE, null);
-			sensorEditor.putString(Sensors.BEACON_SENSOR, null);
-			sensorEditor.commit();
-
-			SharedPreferences sStatusPrefs = getSharedPreferences(
-					Prefs.PREFS_STATUS, Context.MODE_PRIVATE);
-			Editor statusEditor = sStatusPrefs.edit();
-			statusEditor.putBoolean(Prefs.STATUS_IN_OFFICE, false);
-			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, 0);
-			statusEditor.putLong(Prefs.STATUS_TIME_TODAY, 0);
-			statusEditor.putLong(Prefs.STATUS_TIME_WEEK, 0);
-			statusEditor.commit();
-
-			DBHelper DB = DBHelper.getDBHelper(this);
-			DB.deleteAllRows(DBHelper.DetectionLog.TABLE_NAME);
-			
-			alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-			alarmMgr.cancel(BlePendingIntent);
-			alarmMgr.cancel(GlobalUpdatePendingIntent);			
-			
-			Toast t = Toast.makeText(this, "Logged out successfully",
-					Toast.LENGTH_LONG);
-			t.show();
-
-			Intent requestCredsIntent = new Intent(this, LoginActivity.class);
-			startActivityForResult(requestCredsIntent, REQUEST_CREDENTIALS);
-			return true;
-		}
-		return super.onOptionsItemSelected(item);
-	}
-
-	// /**
-	// * Shows the progress UI and hides the login form.
-	// */
+	/**
+	 * Shows the progress UI and hides the login form.
+	 */
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
 	public void showProgress(final boolean show) {
 		// On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
@@ -300,9 +230,106 @@ public class PersonalOverviewActivity extends Activity {
 			mContentView.setVisibility(show ? View.GONE : View.VISIBLE);
 		}
 	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.personal_overview.login) {
+			Intent requestCredsIntent = new Intent(this, LoginActivity.class);
+			startActivityForResult(requestCredsIntent, REQUEST_CREDENTIALS);
+			return true;
+		}
+		if (id == R.personal_overview.logout) {
+
+			Editor authEditor = sAuthPrefs.edit();
+			authEditor.putString(Auth.PREFS_CREDS_UNAME, null);
+			authEditor.putString(Auth.PREFS_CREDS_PASSWORD, null);
+			authEditor.commit();
+
+			SharedPreferences sSensorPrefs = getSharedPreferences(
+					Sensors.PREFS_SENSORS, Context.MODE_PRIVATE);
+			Editor sensorEditor = sAuthPrefs.edit();
+			sensorEditor.putLong(Sensors.SENSOR_LIST_COMPLETE_TIME, 0);
+			sensorEditor.putString(Sensors.SENSOR_LIST_COMPLETE, null);
+			sensorEditor.putString(Sensors.BEACON_SENSOR, null);
+			sensorEditor.commit();
+
+			SharedPreferences sStatusPrefs = getSharedPreferences(
+					Prefs.PREFS_STATUS, Context.MODE_PRIVATE);
+			Editor statusEditor = sStatusPrefs.edit();
+			statusEditor.putBoolean(Prefs.STATUS_IN_OFFICE, false);
+			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, 0);
+			statusEditor.putLong(Prefs.STATUS_TIME_TODAY, 0);
+			statusEditor.putLong(Prefs.STATUS_TIME_WEEK, 0);
+			statusEditor.commit();
+
+			DBHelper DB = DBHelper.getDBHelper(this);
+			DB.deleteAllRows(DBHelper.DetectionLog.TABLE_NAME);
+
+			alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+			alarmMgr.cancel(BlePendingIntent);
+			alarmMgr.cancel(GlobalUpdatePendingIntent);
+
+			Toast t = Toast.makeText(this, "Logged out successfully",
+					Toast.LENGTH_LONG);
+			t.show();
+
+			Intent requestCredsIntent = new Intent(this, LoginActivity.class);
+			startActivityForResult(requestCredsIntent, REQUEST_CREDENTIALS);
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+
+	@Override
+	public void onResume() {
+		super.onResume(); // Always call the superclass method first
+
+		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
+				Context.MODE_PRIVATE);
+
+		today = (TextView) findViewById(R.personal_overview.today);
+		thisWeek = (TextView) findViewById(R.personal_overview.this_week);
+		thisLife = (TextView) findViewById(R.personal_overview.this_life);
+		status = (TextView) findViewById(R.personal_overview.status);
+
+		mProgressView = findViewById(R.personal_overview.fetch_progress);
+		mContentView = findViewById(R.personal_overview.content);
+		
+		timerHandler.postDelayed(updateTimerThread, 0);
+	}
+
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		// Another activity is taking focus (this activity is about to be
+		// "paused").
+		timerHandler.removeCallbacks(updateTimerThread);		
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		// The activity is no longer visible (it is now "stopped")
+		timerHandler.removeCallbacks(updateTimerThread);
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		// The activity is about to be destroyed.
+		timerHandler.removeCallbacks(updateTimerThread);
+	}
+	
+	private Handler timerHandler = new Handler();
 
 	private Runnable updateTimerThread = new Runnable() {
-		
+
 		long currentTimeInSeconds;
 		long timeDifferenceSeconds;
 		long displayTime;
@@ -312,6 +339,7 @@ public class PersonalOverviewActivity extends Activity {
 		int days;
 
 		public void run() {
+
 
 			if (statusPrefs.getBoolean(Prefs.STATUS_IN_OFFICE, false)) {
 
@@ -328,9 +356,9 @@ public class PersonalOverviewActivity extends Activity {
 						* (60 * 60)) / (60);
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
-				
+
 				thisLife.setText(days + ":" + String.format("%02d", hours)
-						+ ":" +String.format("%02d", minutes) + ":"
+						+ ":" + String.format("%02d", minutes) + ":"
 						+ String.format("%02d", seconds));
 
 				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)
@@ -341,8 +369,8 @@ public class PersonalOverviewActivity extends Activity {
 						* (60 * 60)) / (60);
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
-				today.setText(days + ":" + String.format("%02d", hours)
-						+ ":" +String.format("%02d", minutes) + ":"
+				today.setText(days + ":" + String.format("%02d", hours) + ":"
+						+ String.format("%02d", minutes) + ":"
 						+ String.format("%02d", seconds));
 
 				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0)
@@ -354,7 +382,7 @@ public class PersonalOverviewActivity extends Activity {
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
 				thisWeek.setText(days + ":" + String.format("%02d", hours)
-						+ ":" +String.format("%02d", minutes) + ":"
+						+ ":" + String.format("%02d", minutes) + ":"
 						+ String.format("%02d", seconds));
 
 			} else {
@@ -368,9 +396,9 @@ public class PersonalOverviewActivity extends Activity {
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
 				thisLife.setText(days + ":" + String.format("%02d", hours)
-						+ ":" +String.format("%02d", minutes) + ":"
+						+ ":" + String.format("%02d", minutes) + ":"
 						+ String.format("%02d", seconds));
-				
+
 				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0);
 				days = (int) displayTime / (24 * 60 * 60);
 				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
@@ -378,8 +406,8 @@ public class PersonalOverviewActivity extends Activity {
 						* (60 * 60)) / (60);
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
-				today.setText(days + ":" + String.format("%02d", hours)
-						+ ":" +String.format("%02d", minutes) + ":"
+				today.setText(days + ":" + String.format("%02d", hours) + ":"
+						+ String.format("%02d", minutes) + ":"
 						+ String.format("%02d", seconds));
 
 				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0);
@@ -390,7 +418,7 @@ public class PersonalOverviewActivity extends Activity {
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
 				thisWeek.setText(days + ":" + String.format("%02d", hours)
-						+ ":" +String.format("%02d", minutes) + ":"
+						+ ":" + String.format("%02d", minutes) + ":"
 						+ String.format("%02d", seconds));
 			}
 			timerHandler.postDelayed(this, 1000);
