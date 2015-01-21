@@ -64,7 +64,7 @@ public class PersonalOverviewActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_personal_overview);
-
+	
 		// check if password/username is set
 		if (null == sAuthPrefs) {
 			sAuthPrefs = getSharedPreferences(Auth.PREFS_CREDS,
