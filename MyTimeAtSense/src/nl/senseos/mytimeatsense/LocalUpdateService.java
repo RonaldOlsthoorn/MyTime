@@ -17,7 +17,7 @@ import android.util.Log;
 public class LocalUpdateService extends IntentService {
 
 	private final static String TAG = IntentService.class.getSimpleName();
-	public static final long TIME_OUT_LIMIT = (2*BluetoothLeScanService.SCAN_PERIOD)/1000;
+	public static final long TIME_OUT_LIMIT = (2*PersonalOverviewActivity.REPEAT_INTEVAL_MINS_BLE*60);
 	private DBHelper DB;
 	private boolean scanResult;
 	private long scanResultTS;
@@ -77,10 +77,11 @@ public class LocalUpdateService extends IntentService {
 		long previousScanResultTs = statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
 		boolean previousScanResult = statusPrefs.getBoolean(Prefs.STATUS_IN_OFFICE, false);
 		
-		if(scanResultTS-previousScanResultTs<TIME_OUT_LIMIT ||(!previousScanResult && !scanResult)){
+		if(scanResultTS-previousScanResultTs>TIME_OUT_LIMIT ||(!previousScanResult && !scanResult)){
 			return statusPrefs.getLong(Prefs.STATUS_TOTAL_TIME, 0);
 		}
 		if((!previousScanResult && scanResult) || (previousScanResult && !scanResult)){
+			
 			long delta = (1/2)*(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));
 			return statusPrefs.getLong(Prefs.STATUS_TOTAL_TIME, 0)+delta;
 		}		
@@ -93,7 +94,7 @@ public class LocalUpdateService extends IntentService {
 		long previousScanResultTs = statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
 		boolean previousScanResult = statusPrefs.getBoolean(Prefs.STATUS_IN_OFFICE, false);
 		
-		if(scanResultTS-previousScanResultTs<TIME_OUT_LIMIT ||(!previousScanResult && !scanResult)){
+		if(scanResultTS-previousScanResultTs>TIME_OUT_LIMIT ||(!previousScanResult && !scanResult)){
 			return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0);
 		}
 		
@@ -109,10 +110,10 @@ public class LocalUpdateService extends IntentService {
 			}
 			if(!previousScanResult){
 				long delta =(1/2)*(scanResultTS-(calMidnight.getTimeInMillis()/1000));
-				return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)+delta;
+				return delta;
 			}
 			long delta =(scanResultTS-(calMidnight.getTimeInMillis()/1000));
-			return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)+delta;
+			return delta;
 		}
 		else{
 			if((!previousScanResult && scanResult) || (previousScanResult && !scanResult)){
@@ -120,9 +121,7 @@ public class LocalUpdateService extends IntentService {
 				return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)+delta;
 			}		
 	
-			long delta =(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));
-			
-			Log.e(TAG,"delta:  "+delta+" "+statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0));
+			long delta =(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));		
 			return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)+delta;			
 		}
 	}
@@ -132,7 +131,7 @@ public class LocalUpdateService extends IntentService {
 		long previousScanResultTs = statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
 		boolean previousScanResult = statusPrefs.getBoolean(Prefs.STATUS_IN_OFFICE, false);
 		
-		if(scanResultTS-previousScanResultTs<TIME_OUT_LIMIT ||(!previousScanResult && !scanResult)){
+		if(scanResultTS-previousScanResultTs>TIME_OUT_LIMIT ||(!previousScanResult && !scanResult)){
 			return statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0);
 		}
 		
@@ -149,10 +148,10 @@ public class LocalUpdateService extends IntentService {
 			}
 			if(!previousScanResult){
 				long delta =(1/2)*(scanResultTS-(calMondayMidnight.getTimeInMillis()/1000));
-				return statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0)+delta;
+				return delta;
 			}
 			long delta =(scanResultTS-(calMondayMidnight.getTimeInMillis()/1000));
-			return statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0)+delta;
+			return delta;
 		}
 		else{
 			if((!previousScanResult && scanResult) || (previousScanResult && !scanResult)){

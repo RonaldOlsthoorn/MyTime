@@ -110,6 +110,7 @@ public class GlobalUpdateService extends IntentService {
 						lastUpdateTotalTime);
 			}
 			// update and upload to CS
+			
 			int res = cs.sendBeaconData(dataPackage);
 			if (res == 0) {
 				DB.deleteAllRows(DBHelper.DetectionLog.TABLE_NAME);
@@ -141,7 +142,7 @@ public class GlobalUpdateService extends IntentService {
 			calMondayMidnight.set(GregorianCalendar.HOUR_OF_DAY, 0);
 			calMondayMidnight.set(GregorianCalendar.MINUTE, 0);
 			calMondayMidnight.set(GregorianCalendar.SECOND, 0);
-
+			
 			response = cs
 					.fetchStatusBefore(calMondayMidnight.getTimeInMillis() / 1000);
 			JSONObject valueBeforeMondayMidnight = response;
@@ -180,11 +181,11 @@ public class GlobalUpdateService extends IntentService {
 
 			long todayMidnight;
 
-			if (valueBeforeMidnight == null) {
+			if (valueBeforeMidnight.getJSONArray("data").length() == 0) {
 				todayMidnight = new JSONObject(valueAfterMidnight
 						.getJSONArray("data").getJSONObject(0)
 						.getString("value")).getLong("total_time");
-			} else if (valueAfterMidnight == null) {
+			} else if (valueAfterMidnight.getJSONArray("data").length() == 0) {
 				todayMidnight = new JSONObject(valueBeforeMidnight
 						.getJSONArray("data").getJSONObject(0)
 						.getString("value")).getLong("total_time");
@@ -196,7 +197,8 @@ public class GlobalUpdateService extends IntentService {
 						valueBeforeMidnight.getJSONArray("data")
 								.getJSONObject(0).getString("value"))
 						.getBoolean("status");
-				long beforeMidnightTS = valueBeforeMidnight.getJSONArray("data").getJSONObject(0).getLong("date");
+				long beforeMidnightTS = valueBeforeMidnight
+						.getJSONArray("data").getJSONObject(0).getLong("date");
 				long afterMidnight = new JSONObject(valueAfterMidnight
 						.getJSONArray("data").getJSONObject(0)
 						.getString("value")).getLong("total_time");
@@ -204,7 +206,8 @@ public class GlobalUpdateService extends IntentService {
 						valueBeforeMidnight.getJSONArray("data")
 								.getJSONObject(0).getString("value"))
 						.getBoolean("status");
-				long afterMidnightTS = valueAfterMidnight.getJSONArray("data").getJSONObject(0).getLong("date");
+				long afterMidnightTS = valueAfterMidnight.getJSONArray("data")
+						.getJSONObject(0).getLong("date");
 
 				if ((!beforeMidnightStatus && !afterMidnightStatus)
 						|| (afterMidnightTS - beforeMidnightTS > LocalUpdateService.TIME_OUT_LIMIT)) {
@@ -214,8 +217,9 @@ public class GlobalUpdateService extends IntentService {
 				} else if (!beforeMidnightStatus && afterMidnightStatus) {
 					todayMidnight = afterMidnight;
 				} else {
-					todayMidnight = afterMidnight +(beforeMidnightTS
-							- (calMidnight.getTimeInMillis() / 1000));
+					todayMidnight = afterMidnight
+							+ (beforeMidnightTS - (calMidnight
+									.getTimeInMillis() / 1000));
 				}
 			}
 			statusEditor.putLong(Prefs.STATUS_TIME_TODAY, totalTime
@@ -223,26 +227,18 @@ public class GlobalUpdateService extends IntentService {
 
 			long mondayMidnight;
 
-			if (valueBeforeMondayMidnight == null) {
+			if (valueBeforeMondayMidnight.getJSONArray("data").length() == 0) {
+				
 				mondayMidnight = new JSONObject(valueAfterMondayMidnight
 						.getJSONArray("data").getJSONObject(0)
 						.getString("value")).getLong("total_time");
-			} else if (valueAfterMondayMidnight == null) {
+				Log.e(TAG,"before empty "+mondayMidnight);
+			} else if (valueAfterMondayMidnight.getJSONArray("data").length() == 0) {
+
 				mondayMidnight = new JSONObject(valueBeforeMondayMidnight
 						.getJSONArray("data").getJSONObject(0)
 						.getString("value")).getLong("total_time");
 			} else {
-
-				Log.e(TAG,
-						"after: "
-								+ new JSONObject(valueAfterMondayMidnight
-										.getJSONArray("data").getJSONObject(0)
-										.getString("value"))
-										.getLong("total_time"));
-				Log.e(TAG, "before: "
-						+ new JSONObject(valueBeforeMondayMidnight
-								.getJSONArray("data").getJSONObject(0)
-								.getString("value")).getLong("total_time"));
 
 				long beforeMidnight = new JSONObject(valueBeforeMondayMidnight
 						.getJSONArray("data").getJSONObject(0)
@@ -256,14 +252,12 @@ public class GlobalUpdateService extends IntentService {
 				long afterMidnight = new JSONObject(valueAfterMondayMidnight
 						.getJSONArray("data").getJSONObject(0)
 						.getString("value")).getLong("total_time");
-				long afterMidnightTS = valueAfterMondayMidnight.getJSONArray("data").getJSONObject(0).getLong("date");
+				long afterMidnightTS = valueAfterMondayMidnight
+						.getJSONArray("data").getJSONObject(0).getLong("date");
 				boolean afterMidnightStatus = new JSONObject(
 						valueBeforeMondayMidnight.getJSONArray("data")
 								.getJSONObject(0).getString("value"))
 						.getBoolean("status");
-
-				Log.e(TAG, "before: " + beforeMidnight);
-				Log.e(TAG, "after: " + beforeMidnight);
 
 				if ((!beforeMidnightStatus && !afterMidnightStatus)
 						|| (afterMidnightTS - beforeMidnightTS > LocalUpdateService.TIME_OUT_LIMIT)) {
@@ -274,12 +268,14 @@ public class GlobalUpdateService extends IntentService {
 					mondayMidnight = afterMidnight;
 				} else {
 					mondayMidnight = beforeMidnight
-							+ (afterMidnightTS - (calMondayMidnight.getTimeInMillis() / 1000));
+							+ (afterMidnightTS - (calMondayMidnight
+									.getTimeInMillis() / 1000));
 				}
 
-				Log.e(TAG, "mondayMidnight: " + mondayMidnight);
+				
 			}
-			statusEditor.putLong(Prefs.STATUS_TIME_TODAY, totalTime
+			
+			statusEditor.putLong(Prefs.STATUS_TIME_WEEK, totalTime
 					- mondayMidnight);
 
 			statusEditor.commit();
@@ -319,7 +315,7 @@ public class GlobalUpdateService extends IntentService {
 					|| (!leader && !follower)) {
 				dataToken.put("value", "{\"total_time\":" + total + ","
 						+ "\"status\":" + Boolean.toString(leader) + "}");
-			} else if (leader && follower) {
+			} else if ((!leader && follower) ||(leader && !follower) ) {
 
 				long delta = (1 / 2) * (leaderTs - followerTs);
 				total = total + delta;

@@ -56,8 +56,8 @@ public class PersonalOverviewActivity extends Activity {
 	private TextView status;
 	private View mProgressView;
 	private View mContentView;
-	private long REPEAT_INTEVAL_MINS_BLE = 1;
-	private long REPEAT_INTEVAL_MINS_UPLOAD = 5;
+	public static final long REPEAT_INTEVAL_MINS_BLE = 1;
+	public static final long REPEAT_INTEVAL_MINS_UPLOAD = 5;
 
 	private AlarmManager alarmMgr;
 	private SharedPreferences statusPrefs;
