@@ -730,7 +730,7 @@ public class CommonSenseAdapter {
 		todayMidnight.set(GregorianCalendar.HOUR, 0);
 		todayMidnight.set(GregorianCalendar.MINUTE, 0);
 		todayMidnight.set(GregorianCalendar.SECOND, 0);
-		
+				
 		if (null == sAuthPrefs) {
 			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
 					Context.MODE_PRIVATE);
@@ -742,7 +742,7 @@ public class CommonSenseAdapter {
 
 		JSONObject beaconSensor = new JSONObject(beaconSensorString);
 
-		Log.d(TAG, "todayMidnight: "+todayMidnight.getTimeInMillis() / 1000);
+		Log.e(TAG, "todayMidnight: "+todayMidnight.getTimeInMillis() / 1000);
 		
 		int sensorId = (int) beaconSensor.getLong("id");
 		String url = Url.SENSORS_URL + "/" + sensorId + "/data"

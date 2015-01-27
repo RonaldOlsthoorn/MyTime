@@ -20,7 +20,8 @@ public class GlobalUpdateService extends IntentService {
 
 	private static final String TAG = GlobalUpdateService.class.getSimpleName();
 	private CommonSenseAdapter cs;
-	private SharedPreferences sAuthPrefs;
+	private SharedPreferences authPrefs;
+	private SharedPreferences statusPrefs;
 	private DBHelper DB;
 
 	public GlobalUpdateService() {
@@ -30,9 +31,9 @@ public class GlobalUpdateService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 
 		Log.v(TAG, "global update");
-		sAuthPrefs = getSharedPreferences(Auth.PREFS_CREDS, 0);
-		String mEmail = sAuthPrefs.getString(Auth.PREFS_CREDS_UNAME, null);
-		String mPassword = sAuthPrefs
+		authPrefs = getSharedPreferences(Auth.PREFS_CREDS, 0);
+		String mEmail = authPrefs.getString(Auth.PREFS_CREDS_UNAME, null);
+		String mPassword = authPrefs
 				.getString(Auth.PREFS_CREDS_PASSWORD, null);
 
 		if (mEmail == null || mPassword == null) {
@@ -95,6 +96,7 @@ public class GlobalUpdateService extends IntentService {
 				Prefs.PREFS_STATUS, Context.MODE_PRIVATE);
 
 		Editor statusEditor = statusPrefs.edit();
+		
 		try {
 			// fetch latest status and update the status in SharedPreferences
 			JSONObject response = cs.fetchTotalTime();
@@ -118,6 +120,7 @@ public class GlobalUpdateService extends IntentService {
 
 			statusEditor.putLong(Prefs.STATUS_TIME_TODAY,
 					totalTime - value.getLong("total_time"));
+			
 			response = cs.fetchTimeThisWeek();
 			if (response == null) {
 				return;

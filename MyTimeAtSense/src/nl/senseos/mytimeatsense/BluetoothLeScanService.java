@@ -24,7 +24,7 @@ public class BluetoothLeScanService extends Service {
 	private BluetoothManager mBluetoothManager;
 	private BluetoothAdapter mBluetoothAdapter;
 	// Stops scanning after 5 seconds.
-	private static final long SCAN_PERIOD = 5 * 1000l;
+	public static final long SCAN_PERIOD = 5 * 1000l;
 	private boolean beaconFound = false;
 	private boolean mScanning;
 	private Handler mHandler;
