@@ -39,9 +39,20 @@ public class PersonalOverviewActivity extends Activity {
 	private final int REQUEST_ENABLE_BT = 10;
 	private final int REQUEST_CREDENTIALS = 20;
 
-	private TextView today;
-	private TextView thisWeek;
-	private TextView thisLife;
+	private TextView todayHours;
+	private TextView todayMinutes;
+	private TextView todaySeconds;
+	
+	private TextView thisWeekDays;
+	private TextView thisWeekHours;
+	private TextView thisWeekMinutes;
+	private TextView thisWeekSeconds;
+
+	private TextView thisLifeDays;
+	private TextView thisLifeHours;
+	private TextView thisLifeMinutes;
+	private TextView thisLifeSeconds;
+
 	private TextView status;
 	private View mProgressView;
 	private View mContentView;
@@ -64,7 +75,7 @@ public class PersonalOverviewActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_personal_overview);
-	
+
 		// check if password/username is set
 		if (null == sAuthPrefs) {
 			sAuthPrefs = getSharedPreferences(Auth.PREFS_CREDS,
@@ -79,7 +90,7 @@ public class PersonalOverviewActivity extends Activity {
 			startActivityForResult(requestCredsIntent, REQUEST_CREDENTIALS);
 			return;
 		}
-
+		
 		// Use this check to determine whether BLE is supported on the device.
 		// Then you can
 		// selectively disable BLE-related features.
@@ -115,9 +126,20 @@ public class PersonalOverviewActivity extends Activity {
 		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);
 
-		today = (TextView) findViewById(R.personal_overview.today);
-		thisWeek = (TextView) findViewById(R.personal_overview.this_week);
-		thisLife = (TextView) findViewById(R.personal_overview.this_life);
+		todayHours = (TextView) findViewById(R.personal_overview.today_hour);
+		todayMinutes = (TextView) findViewById(R.personal_overview.today_minute);
+		todaySeconds = (TextView) findViewById(R.personal_overview.today_seconds);
+
+		thisWeekDays = (TextView) findViewById(R.personal_overview.this_week_day);
+		thisWeekHours = (TextView) findViewById(R.personal_overview.this_week_hour);
+		thisWeekMinutes = (TextView) findViewById(R.personal_overview.this_week_minute);
+		thisWeekSeconds = (TextView) findViewById(R.personal_overview.this_week_second);
+
+		thisLifeDays = (TextView) findViewById(R.personal_overview.this_life_day);
+		thisLifeHours = (TextView) findViewById(R.personal_overview.this_life_hour);
+		thisLifeMinutes = (TextView) findViewById(R.personal_overview.this_life_minute);
+		thisLifeSeconds = (TextView) findViewById(R.personal_overview.this_life_second);
+
 		status = (TextView) findViewById(R.personal_overview.status);
 
 		mProgressView = findViewById(R.personal_overview.fetch_progress);
@@ -157,7 +179,7 @@ public class PersonalOverviewActivity extends Activity {
 			finish();
 			return;
 		}
-		
+
 		BleServiceIntent = new Intent(this, BleAlarmReceiver.class);
 		BlePendingIntent = PendingIntent.getBroadcast(this, 2,
 				BleServiceIntent, 0);
@@ -189,7 +211,7 @@ public class PersonalOverviewActivity extends Activity {
 		getMenuInflater().inflate(R.menu.personal_overview, menu);
 		return true;
 	}
-	
+
 	/**
 	 * Shows the progress UI and hides the login form.
 	 */
@@ -230,7 +252,7 @@ public class PersonalOverviewActivity extends Activity {
 			mContentView.setVisibility(show ? View.GONE : View.VISIBLE);
 		}
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle action bar item clicks here. The action bar will
@@ -284,7 +306,6 @@ public class PersonalOverviewActivity extends Activity {
 		return super.onOptionsItemSelected(item);
 	}
 
-
 	@Override
 	public void onResume() {
 		super.onResume(); // Always call the superclass method first
@@ -292,24 +313,32 @@ public class PersonalOverviewActivity extends Activity {
 		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);
 
-		today = (TextView) findViewById(R.personal_overview.today);
-		thisWeek = (TextView) findViewById(R.personal_overview.this_week);
-		thisLife = (TextView) findViewById(R.personal_overview.this_life);
-		status = (TextView) findViewById(R.personal_overview.status);
+		todayHours = (TextView) findViewById(R.personal_overview.today_hour);
+		todayMinutes = (TextView) findViewById(R.personal_overview.today_minute);
+		todaySeconds = (TextView) findViewById(R.personal_overview.today_seconds);
+
+		thisWeekDays = (TextView) findViewById(R.personal_overview.this_week_day);
+		thisWeekHours = (TextView) findViewById(R.personal_overview.this_week_hour);
+		thisWeekMinutes = (TextView) findViewById(R.personal_overview.this_week_minute);
+		thisWeekSeconds = (TextView) findViewById(R.personal_overview.this_week_second);
+
+		thisLifeDays = (TextView) findViewById(R.personal_overview.this_life_day);
+		thisLifeHours = (TextView) findViewById(R.personal_overview.this_life_hour);
+		thisLifeMinutes = (TextView) findViewById(R.personal_overview.this_life_minute);
+		thisLifeSeconds = (TextView) findViewById(R.personal_overview.this_life_second);
 
 		mProgressView = findViewById(R.personal_overview.fetch_progress);
 		mContentView = findViewById(R.personal_overview.content);
-		
+
 		timerHandler.postDelayed(updateTimerThread, 0);
 	}
-
 
 	@Override
 	protected void onPause() {
 		super.onPause();
 		// Another activity is taking focus (this activity is about to be
 		// "paused").
-		timerHandler.removeCallbacks(updateTimerThread);		
+		timerHandler.removeCallbacks(updateTimerThread);
 	}
 
 	@Override
@@ -325,7 +354,7 @@ public class PersonalOverviewActivity extends Activity {
 		// The activity is about to be destroyed.
 		timerHandler.removeCallbacks(updateTimerThread);
 	}
-	
+
 	private Handler timerHandler = new Handler();
 
 	private Runnable updateTimerThread = new Runnable() {
@@ -339,7 +368,6 @@ public class PersonalOverviewActivity extends Activity {
 		int days;
 
 		public void run() {
-
 
 			if (statusPrefs.getBoolean(Prefs.STATUS_IN_OFFICE, false)) {
 
@@ -357,22 +385,11 @@ public class PersonalOverviewActivity extends Activity {
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
 
-				thisLife.setText(days + ":" + String.format("%02d", hours)
-						+ ":" + String.format("%02d", minutes) + ":"
-						+ String.format("%02d", seconds));
-
-				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)
-						+ timeDifferenceSeconds;
-				days = (int) displayTime / (24 * 60 * 60);
-				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
-				minutes = (int) (displayTime - days * (24 * 60 * 60) - hours
-						* (60 * 60)) / (60);
-				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
-						* (60 * 60) - minutes * 60);
-				today.setText(days + ":" + String.format("%02d", hours) + ":"
-						+ String.format("%02d", minutes) + ":"
-						+ String.format("%02d", seconds));
-
+				thisLifeDays.setText(Integer.toString(days));
+				thisLifeHours.setText(String.format("%02d", hours));
+				thisLifeMinutes.setText(String.format("%02d", minutes));
+				thisLifeSeconds.setText(String.format("%02d", seconds));
+						
 				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0)
 						+ timeDifferenceSeconds;
 				days = (int) displayTime / (24 * 60 * 60);
@@ -381,9 +398,26 @@ public class PersonalOverviewActivity extends Activity {
 						* (60 * 60)) / (60);
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
-				thisWeek.setText(days + ":" + String.format("%02d", hours)
-						+ ":" + String.format("%02d", minutes) + ":"
-						+ String.format("%02d", seconds));
+				
+				thisWeekDays.setText(Integer.toString(days));
+				thisWeekHours.setText(String.format("%02d", hours));
+				thisWeekMinutes.setText(String.format("%02d", minutes));
+				thisWeekSeconds.setText(String.format("%02d", seconds));
+				
+				
+				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)
+						+ timeDifferenceSeconds;
+				days = (int) displayTime / (24 * 60 * 60);
+				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
+				minutes = (int) (displayTime - days * (24 * 60 * 60) - hours
+						* (60 * 60)) / (60);
+				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
+						* (60 * 60) - minutes * 60);
+				
+				todayHours.setText(String.format("%02d", hours));
+				todayMinutes.setText(String.format("%02d", minutes));
+				todaySeconds.setText(String.format("%02d", seconds));
+				
 
 			} else {
 				status.setText("Status: not in the sense office");
@@ -395,9 +429,22 @@ public class PersonalOverviewActivity extends Activity {
 						* (60 * 60)) / (60);
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
-				thisLife.setText(days + ":" + String.format("%02d", hours)
-						+ ":" + String.format("%02d", minutes) + ":"
-						+ String.format("%02d", seconds));
+				thisLifeDays.setText(Integer.toString(days));
+				thisLifeHours.setText(String.format("%02d", hours));
+				thisLifeMinutes.setText(String.format("%02d", minutes));
+				thisLifeSeconds.setText(String.format("%02d", seconds));
+				
+				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0);
+				days = (int) displayTime / (24 * 60 * 60);
+				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
+				minutes = (int) (displayTime - days * (24 * 60 * 60) - hours
+						* (60 * 60)) / (60);
+				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
+						* (60 * 60) - minutes * 60);
+				thisWeekDays.setText(Integer.toString(days));
+				thisWeekHours.setText(String.format("%02d", hours));
+				thisWeekMinutes.setText(String.format("%02d", minutes));
+				thisWeekSeconds.setText(String.format("%02d", seconds));
 
 				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0);
 				days = (int) displayTime / (24 * 60 * 60);
@@ -406,20 +453,10 @@ public class PersonalOverviewActivity extends Activity {
 						* (60 * 60)) / (60);
 				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
 						* (60 * 60) - minutes * 60);
-				today.setText(days + ":" + String.format("%02d", hours) + ":"
-						+ String.format("%02d", minutes) + ":"
-						+ String.format("%02d", seconds));
-
-				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0);
-				days = (int) displayTime / (24 * 60 * 60);
-				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
-				minutes = (int) (displayTime - days * (24 * 60 * 60) - hours
-						* (60 * 60)) / (60);
-				seconds = (int) (displayTime - days * (24 * 60 * 60) - hours
-						* (60 * 60) - minutes * 60);
-				thisWeek.setText(days + ":" + String.format("%02d", hours)
-						+ ":" + String.format("%02d", minutes) + ":"
-						+ String.format("%02d", seconds));
+				
+				todayHours.setText(String.format("%02d", hours));
+				todayMinutes.setText(String.format("%02d", minutes));
+				todaySeconds.setText(String.format("%02d", seconds));				
 			}
 			timerHandler.postDelayed(this, 1000);
 		}

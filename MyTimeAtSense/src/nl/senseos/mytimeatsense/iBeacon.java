@@ -18,6 +18,7 @@ public class iBeacon {
 	private int major;
 	private int minor;
 	private int tx;
+	private int rssi;
 
 	/**
 	 * returns beacon instance from PDU if parseable. If not, returns null.
@@ -85,6 +86,13 @@ public class iBeacon {
 
 	public int getMinor() {
 		return minor;
+	}
+	public int getRSSI() {
+		return rssi;
+	}
+	
+	public void setRSSI(int r){
+		rssi=r;
 	}
 
 	// characters used to display hexadecimal numbers

@@ -122,7 +122,6 @@ public class DBHelper extends SQLiteOpenHelper implements BaseColumns {
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL(DetectionLog.SQL_CREATE_TABLE);
-
 	}
 
 	/*
@@ -152,6 +151,8 @@ public class DBHelper extends SQLiteOpenHelper implements BaseColumns {
 		public static final String COLUMN_GR_ID = _ID;
 		public static final String COLUMN_TIMESTAMP = "timestamp";
 		public static final String COLUMN_DETECTION_RESULT = "detection_result";
+		public static final String COLUMN_MAJOR = "major";
+		public static final String COLUMN_MINOR = "minor";
 
 		public static final String SQL_CREATE_TABLE = "CREATE TABLE IF NOT EXISTS "
 				+ TABLE_NAME
@@ -159,9 +160,14 @@ public class DBHelper extends SQLiteOpenHelper implements BaseColumns {
 				+ COLUMN_GR_ID
 				+ " INTEGER PRIMARY KEY ,"
 				+ COLUMN_TIMESTAMP
-				+ " LONG NOT NULL"
-				+ ","
-				+ COLUMN_DETECTION_RESULT + " BOOLEAN NOT NULL" + " )";
+				+ " LONG NOT NULL ,"
+				+ COLUMN_DETECTION_RESULT 
+				+ " BOOLEAN NOT NULL , "
+				+ COLUMN_MAJOR
+				+ " INT ,"
+				+ COLUMN_MINOR
+				+ " INT "			
+				 + " )";
 
 		public static final String SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS "
 				+ TABLE_NAME;

@@ -17,7 +17,8 @@ public class BluetoothLeScanService extends Service {
 			+ "0000000000000000000000000000000000000000000000000000000000000000000000000000" };
 	public final static String SCAN_RESULT = "ble_scan_result";
 	public final static String SCAN_RESULT_TIMESTAMP = "ble_scan_result_timestamp";
-
+	public final static String SCAN_RESULT_MAJOR = "ble_scan_result_major";
+	public final static String SCAN_RESULT_MINOR = "ble_scan_result_minor";
 	private final static String TAG = BluetoothLeScanService.class
 			.getSimpleName();
 	private BluetoothManager mBluetoothManager;
@@ -27,6 +28,8 @@ public class BluetoothLeScanService extends Service {
 	private boolean beaconFound = false;
 	private boolean mScanning;
 	private Handler mHandler;
+	
+	private iBeacon proximity;
 
 	private void broadcastUpload() {
 
@@ -34,6 +37,11 @@ public class BluetoothLeScanService extends Service {
 		intent.putExtra(SCAN_RESULT, beaconFound);
 		intent.putExtra(SCAN_RESULT_TIMESTAMP,
 				System.currentTimeMillis() / 1000); // (in full seconds!)
+		if(beaconFound){
+			intent.putExtra(SCAN_RESULT_MAJOR, proximity.getMajor());
+			intent.putExtra(SCAN_RESULT_MINOR, proximity.getMinor());			
+		}
+		
 		startService(intent);
 	}
 	
@@ -92,6 +100,7 @@ public class BluetoothLeScanService extends Service {
 				}
 			}, SCAN_PERIOD);
 			
+			proximity=null;
 			mScanning = true;
 			mBluetoothAdapter.startLeScan(mLeScanCallback);
 			Log.d(TAG, "start scanning");		
@@ -110,11 +119,22 @@ public class BluetoothLeScanService extends Service {
 			PDU = scanRecord;		
 			iBeacon res = iBeacon.parseSupportedAd(PDU);
 			
+			//check if device is a beacon
 			if (res!=null) {
 				Log.v(TAG, "Beacon detected");
 				beaconFound = true;
+				res.setRSSI(rssi);
+				
+				//check whether this device is closer than previous devices.
+				//override proximity if so.
+				if(proximity==null){
+					proximity = res;
+				}else{
+					if(proximity.getRSSI()< rssi){
+						proximity = res;
+					}
+				}
 			}
-//			Log.d("PDU", bytesToHex(PDU));
 		}
 	};
 

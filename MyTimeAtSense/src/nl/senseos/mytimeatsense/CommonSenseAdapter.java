@@ -867,8 +867,7 @@ public class CommonSenseAdapter {
 		HashMap<String, String> result = new HashMap<String, String>();
 		try {
 
-			// set always
-			final boolean compress = false;
+			boolean compress = true;
 
 			// open new URL connection channel.
 			URL url = new URL(urlString);

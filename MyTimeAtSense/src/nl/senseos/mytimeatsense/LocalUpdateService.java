@@ -35,6 +35,10 @@ public class LocalUpdateService extends IntentService {
 				BluetoothLeScanService.SCAN_RESULT, false);
 		long tsCurrent = intent.getLongExtra(
 				BluetoothLeScanService.SCAN_RESULT_TIMESTAMP, 0);
+		int major = intent.getIntExtra(
+				BluetoothLeScanService.SCAN_RESULT_MAJOR, -1);
+		int minor = intent.getIntExtra(
+				BluetoothLeScanService.SCAN_RESULT_MINOR, -1);
 
 		Log.d(TAG, "detected: " + detected + " ts: " + tsCurrent);
 
@@ -43,6 +47,9 @@ public class LocalUpdateService extends IntentService {
 		ContentValues v = new ContentValues();
 		v.put(DBHelper.DetectionLog.COLUMN_TIMESTAMP, tsCurrent);
 		v.put(DBHelper.DetectionLog.COLUMN_DETECTION_RESULT, detected);
+		v.put(DBHelper.DetectionLog.COLUMN_MAJOR, major);
+		v.put(DBHelper.DetectionLog.COLUMN_MINOR, minor);
+		
 		DB.insertOrIgnore(DBHelper.DetectionLog.TABLE_NAME, v);
 
 		// update current state in shared preferences
