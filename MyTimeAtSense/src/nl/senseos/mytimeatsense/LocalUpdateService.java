@@ -17,7 +17,7 @@ import android.util.Log;
 public class LocalUpdateService extends IntentService {
 
 	private final static String TAG = IntentService.class.getSimpleName();
-	private static final long TIME_OUT_LIMIT = (2*BluetoothLeScanService.SCAN_PERIOD)/1000;
+	public static final long TIME_OUT_LIMIT = (2*BluetoothLeScanService.SCAN_PERIOD)/1000;
 	private DBHelper DB;
 	private boolean scanResult;
 	private long scanResultTS;
@@ -67,7 +67,7 @@ public class LocalUpdateService extends IntentService {
 		prefsEditor.putLong(Prefs.STATUS_TIMESTAMP, scanResultTS);
 		prefsEditor.putLong(Prefs.STATUS_TOTAL_TIME, getTotalTimeUpdate());
 		prefsEditor.putLong(Prefs.STATUS_TIME_WEEK, getThisWeekTimeUpdate());
-		prefsEditor.putLong(Prefs.STATUS_TIME_WEEK, getTodayTimeUpdate());
+		prefsEditor.putLong(Prefs.STATUS_TIME_TODAY, getTodayTimeUpdate());
 		prefsEditor.commit();
 
 	}
@@ -119,7 +119,10 @@ public class LocalUpdateService extends IntentService {
 				long delta = (1/2)*(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));
 				return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)+delta;
 			}		
+	
 			long delta =(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));
+			
+			Log.e(TAG,"delta:  "+delta+" "+statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0));
 			return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)+delta;			
 		}
 	}

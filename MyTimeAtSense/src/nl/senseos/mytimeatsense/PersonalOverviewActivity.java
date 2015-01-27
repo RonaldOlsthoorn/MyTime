@@ -57,7 +57,7 @@ public class PersonalOverviewActivity extends Activity {
 	private View mProgressView;
 	private View mContentView;
 	private long REPEAT_INTEVAL_MINS_BLE = 1;
-	private long REPEAT_INTEVAL_MINS_UPLOAD = 45;
+	private long REPEAT_INTEVAL_MINS_UPLOAD = 5;
 
 	private AlarmManager alarmMgr;
 	private SharedPreferences statusPrefs;
@@ -329,6 +329,8 @@ public class PersonalOverviewActivity extends Activity {
 
 		mProgressView = findViewById(R.personal_overview.fetch_progress);
 		mContentView = findViewById(R.personal_overview.content);
+		
+		status = (TextView) findViewById(R.personal_overview.status);
 
 		timerHandler.postDelayed(updateTimerThread, 0);
 	}

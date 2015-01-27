@@ -1,10 +1,12 @@
 package nl.senseos.mytimeatsense;
 
 import java.io.IOException;
+import java.util.GregorianCalendar;
 
 import nl.senseos.mytimeatsense.CommonSenseConstants.Auth;
 import nl.senseos.mytimeatsense.DemanesConstants.Prefs;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,6 +26,9 @@ public class GlobalUpdateService extends IntentService {
 	private SharedPreferences statusPrefs;
 	private DBHelper DB;
 
+	private GregorianCalendar calMidnight;
+	private GregorianCalendar calMondayMidnight;
+
 	public GlobalUpdateService() {
 		super(TAG);
 	}
@@ -31,10 +36,11 @@ public class GlobalUpdateService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 
 		Log.v(TAG, "global update");
-		authPrefs = getSharedPreferences(Auth.PREFS_CREDS, 0);
+		authPrefs = getSharedPreferences(Auth.PREFS_CREDS, Context.MODE_PRIVATE);
+		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
+				Context.MODE_PRIVATE);
 		String mEmail = authPrefs.getString(Auth.PREFS_CREDS_UNAME, null);
-		String mPassword = authPrefs
-				.getString(Auth.PREFS_CREDS_PASSWORD, null);
+		String mPassword = authPrefs.getString(Auth.PREFS_CREDS_PASSWORD, null);
 
 		if (mEmail == null || mPassword == null) {
 			Log.v(TAG, "no creds, return");
@@ -64,22 +70,9 @@ public class GlobalUpdateService extends IntentService {
 			e1.printStackTrace();
 		}
 
-		// no sensor means no updating, continue to logout
 		if (sensorPresent) {
-
-			DB = DBHelper.getDBHelper(this);
-			Cursor log = DB.getCompleteLog();
-
-			if (log.getCount() < 2) {
-				Log.v(TAG,
-						"not enough datapoints in the db, update local status from CS");
-				updateLocalStatus();
-				return;
-			} else {
-				Log.v(TAG, "enough datapoints in the db, full CS sync");
-				fullSyncCS();
-				return;
-			}
+			Log.v(TAG, "full CS sync");
+			fullSyncCS();
 		}
 
 		// logout
@@ -90,71 +83,22 @@ public class GlobalUpdateService extends IntentService {
 		}
 	}
 
-	private void updateLocalStatus() {
-
-		SharedPreferences statusPrefs = getSharedPreferences(
-				Prefs.PREFS_STATUS, Context.MODE_PRIVATE);
-
-		Editor statusEditor = statusPrefs.edit();
-		
-		try {
-			// fetch latest status and update the status in SharedPreferences
-			JSONObject response = cs.fetchTotalTime();
-			if (response == null) {
-				return;
-			}
-			JSONObject value = new JSONObject(response.getString("value"));
-
-			long totalTime = value.getLong("total_time");
-			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, totalTime);
-			statusEditor.putBoolean(Prefs.STATUS_IN_OFFICE,
-					value.getBoolean("status"));
-			statusEditor.putLong(Prefs.STATUS_TIMESTAMP,
-					System.currentTimeMillis() / 1000);
-
-			response = cs.fetchTimeToday();
-			if (response == null) {
-				return;
-			}
-			value = new JSONObject(response.getString("value"));
-
-			statusEditor.putLong(Prefs.STATUS_TIME_TODAY,
-					totalTime - value.getLong("total_time"));
-			
-			response = cs.fetchTimeThisWeek();
-			if (response == null) {
-				return;
-			}
-			value = new JSONObject(response.getString("value"));
-
-			statusEditor.putLong(Prefs.STATUS_TIME_WEEK,
-					totalTime - value.getLong("total_time"));
-
-			statusEditor.commit();
-
-		} catch (JSONException | IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private void fullSyncCS() {
 
 		try {
 			// first get the latest update from CS
 			JSONObject response = cs.fetchTotalTime();
 
-			SharedPreferences statusPrefs = getSharedPreferences(
-					Prefs.PREFS_STATUS, Context.MODE_PRIVATE);
-
 			boolean localStatus = statusPrefs.getBoolean(
 					Prefs.STATUS_IN_OFFICE, false);
+
 			long localTs = statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
 
-			long newTotalTime = 0;
+			JSONObject dataPackage;
 
 			// no data points present on CS, upload local value as is
 			if (response == null) {
-				newTotalTime = computeIncrement(false, 0);
+				dataPackage = dbToJSON(false, 0, 0);
 			} else {
 				// obtain latest update from response
 				long lastUpdateTs = response.getLong("date");
@@ -162,87 +106,241 @@ public class GlobalUpdateService extends IntentService {
 				boolean lastUpdateStatus = value.getBoolean("status");
 				long lastUpdateTotalTime = value.getLong("total_time");
 
-				// compute new total time
-				newTotalTime = lastUpdateTotalTime
-						+ computeIncrement(lastUpdateStatus, lastUpdateTs);
+				dataPackage = dbToJSON(lastUpdateStatus, lastUpdateTs,
+						lastUpdateTotalTime);
 			}
 			// update and upload to CS
-			int res = cs.sendBeaconData(localTs, newTotalTime, localStatus);
+			int res = cs.sendBeaconData(dataPackage);
 			if (res == 0) {
 				DB.deleteAllRows(DBHelper.DetectionLog.TABLE_NAME);
 			}
-
-			Editor statusEditor = statusPrefs.edit();
 
 			// fetch latest status and update the status in SharedPreferences
 			response = cs.fetchTotalTime();
 			if (response == null) {
 				return;
 			}
-			JSONObject value = new JSONObject(response.getString("value"));
+			JSONObject valueCurrent = response;
 
-			long totalTime = value.getLong("total_time");
-			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, totalTime);
-			statusEditor.putBoolean(Prefs.STATUS_IN_OFFICE,
-					value.getBoolean("status"));
-			statusEditor.putLong(Prefs.STATUS_TIMESTAMP,
-					System.currentTimeMillis() / 1000);
+			calMidnight = new GregorianCalendar();
+			calMidnight.set(GregorianCalendar.HOUR_OF_DAY, 0);
+			calMidnight.set(GregorianCalendar.MINUTE, 0);
+			calMidnight.set(GregorianCalendar.SECOND, 0);
 
-			response = cs.fetchTimeToday();
-			if (response == null) {
-				return;
-			}
-			value = new JSONObject(response.getString("value"));
+			response = cs
+					.fetchStatusBefore(calMidnight.getTimeInMillis() / 1000);
+			JSONObject valueBeforeMidnight = response;
 
-			statusEditor.putLong(Prefs.STATUS_TIME_TODAY,
-					totalTime - value.getLong("total_time"));
-			response = cs.fetchTimeThisWeek();
-			if (response == null) {
-				return;
-			}
-			value = new JSONObject(response.getString("value"));
+			response = cs
+					.fetchStatusAfter(calMidnight.getTimeInMillis() / 1000);
+			JSONObject valueAfterMidnight = response;
 
-			statusEditor.putLong(Prefs.STATUS_TIME_WEEK,
-					totalTime - value.getLong("total_time"));
+			calMondayMidnight = new GregorianCalendar();
+			calMondayMidnight.set(GregorianCalendar.DAY_OF_WEEK,
+					GregorianCalendar.MONDAY);
+			calMondayMidnight.set(GregorianCalendar.HOUR_OF_DAY, 0);
+			calMondayMidnight.set(GregorianCalendar.MINUTE, 0);
+			calMondayMidnight.set(GregorianCalendar.SECOND, 0);
 
-			statusEditor.commit();
+			response = cs
+					.fetchStatusBefore(calMondayMidnight.getTimeInMillis() / 1000);
+			JSONObject valueBeforeMondayMidnight = response;
+
+			response = cs
+					.fetchStatusAfter(calMondayMidnight.getTimeInMillis() / 1000);
+			JSONObject valueAfterMondayMidnight = response;
+
+			updateStatusPrefs(valueCurrent, valueBeforeMidnight,
+					valueAfterMidnight, valueBeforeMondayMidnight,
+					valueAfterMondayMidnight);
 
 		} catch (JSONException | IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public long computeIncrement(boolean initStatus, long lastUpdateTs) {
+	private void updateStatusPrefs(JSONObject valueCurrent,
+			JSONObject valueBeforeMidnight, JSONObject valueAfterMidnight,
+			JSONObject valueBeforeMondayMidnight,
+			JSONObject valueAfterMondayMidnight) {
 
-		Cursor log = DB.getCompleteLog();
+		try {
+			Editor statusEditor = statusPrefs.edit();
+
+			Log.e(TAG, valueCurrent.getString("value"));
+			long totalTime = new JSONObject(valueCurrent.getString("value"))
+					.getLong("total_time");
+			boolean statusCurrent = new JSONObject(
+					valueCurrent.getString("value")).getBoolean("status");
+			long timeStampCurrent = valueCurrent.getLong("date");
+
+			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, totalTime);
+			statusEditor.putBoolean(Prefs.STATUS_IN_OFFICE, statusCurrent);
+			statusEditor.putLong(Prefs.STATUS_TIMESTAMP, timeStampCurrent);
+
+			long todayMidnight;
+
+			if (valueBeforeMidnight == null) {
+				todayMidnight = new JSONObject(valueAfterMidnight
+						.getJSONArray("data").getJSONObject(0)
+						.getString("value")).getLong("total_time");
+			} else if (valueAfterMidnight == null) {
+				todayMidnight = new JSONObject(valueBeforeMidnight
+						.getJSONArray("data").getJSONObject(0)
+						.getString("value")).getLong("total_time");
+			} else {
+				long beforeMidnight = new JSONObject(valueBeforeMidnight
+						.getJSONArray("data").getJSONObject(0)
+						.getString("value")).getLong("total_time");
+				boolean beforeMidnightStatus = new JSONObject(
+						valueBeforeMidnight.getJSONArray("data")
+								.getJSONObject(0).getString("value"))
+						.getBoolean("status");
+				long beforeMidnightTS = valueBeforeMidnight.getJSONArray("data").getJSONObject(0).getLong("date");
+				long afterMidnight = new JSONObject(valueAfterMidnight
+						.getJSONArray("data").getJSONObject(0)
+						.getString("value")).getLong("total_time");
+				boolean afterMidnightStatus = new JSONObject(
+						valueBeforeMidnight.getJSONArray("data")
+								.getJSONObject(0).getString("value"))
+						.getBoolean("status");
+				long afterMidnightTS = valueAfterMidnight.getJSONArray("data").getJSONObject(0).getLong("date");
+
+				if ((!beforeMidnightStatus && !afterMidnightStatus)
+						|| (afterMidnightTS - beforeMidnightTS > LocalUpdateService.TIME_OUT_LIMIT)) {
+					todayMidnight = beforeMidnight;
+				} else if (beforeMidnightStatus && !afterMidnightStatus) {
+					todayMidnight = afterMidnight;
+				} else if (!beforeMidnightStatus && afterMidnightStatus) {
+					todayMidnight = afterMidnight;
+				} else {
+					todayMidnight = afterMidnight +(beforeMidnightTS
+							- (calMidnight.getTimeInMillis() / 1000));
+				}
+			}
+			statusEditor.putLong(Prefs.STATUS_TIME_TODAY, totalTime
+					- todayMidnight);
+
+			long mondayMidnight;
+
+			if (valueBeforeMondayMidnight == null) {
+				mondayMidnight = new JSONObject(valueAfterMondayMidnight
+						.getJSONArray("data").getJSONObject(0)
+						.getString("value")).getLong("total_time");
+			} else if (valueAfterMondayMidnight == null) {
+				mondayMidnight = new JSONObject(valueBeforeMondayMidnight
+						.getJSONArray("data").getJSONObject(0)
+						.getString("value")).getLong("total_time");
+			} else {
+
+				Log.e(TAG,
+						"after: "
+								+ new JSONObject(valueAfterMondayMidnight
+										.getJSONArray("data").getJSONObject(0)
+										.getString("value"))
+										.getLong("total_time"));
+				Log.e(TAG, "before: "
+						+ new JSONObject(valueBeforeMondayMidnight
+								.getJSONArray("data").getJSONObject(0)
+								.getString("value")).getLong("total_time"));
+
+				long beforeMidnight = new JSONObject(valueBeforeMondayMidnight
+						.getJSONArray("data").getJSONObject(0)
+						.getString("value")).getLong("total_time");
+				boolean beforeMidnightStatus = new JSONObject(
+						valueBeforeMondayMidnight.getJSONArray("data")
+								.getJSONObject(0).getString("value"))
+						.getBoolean("status");
+				long beforeMidnightTS = valueBeforeMondayMidnight
+						.getJSONArray("data").getJSONObject(0).getLong("date");
+				long afterMidnight = new JSONObject(valueAfterMondayMidnight
+						.getJSONArray("data").getJSONObject(0)
+						.getString("value")).getLong("total_time");
+				long afterMidnightTS = valueAfterMondayMidnight.getJSONArray("data").getJSONObject(0).getLong("date");
+				boolean afterMidnightStatus = new JSONObject(
+						valueBeforeMondayMidnight.getJSONArray("data")
+								.getJSONObject(0).getString("value"))
+						.getBoolean("status");
+
+				Log.e(TAG, "before: " + beforeMidnight);
+				Log.e(TAG, "after: " + beforeMidnight);
+
+				if ((!beforeMidnightStatus && !afterMidnightStatus)
+						|| (afterMidnightTS - beforeMidnightTS > LocalUpdateService.TIME_OUT_LIMIT)) {
+					mondayMidnight = beforeMidnight;
+				} else if (beforeMidnightStatus && !afterMidnightStatus) {
+					mondayMidnight = afterMidnight;
+				} else if (!beforeMidnightStatus && afterMidnightStatus) {
+					mondayMidnight = afterMidnight;
+				} else {
+					mondayMidnight = beforeMidnight
+							+ (afterMidnightTS - (calMondayMidnight.getTimeInMillis() / 1000));
+				}
+
+				Log.e(TAG, "mondayMidnight: " + mondayMidnight);
+			}
+			statusEditor.putLong(Prefs.STATUS_TIME_TODAY, totalTime
+					- mondayMidnight);
+
+			statusEditor.commit();
+
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public JSONObject dbToJSON(boolean initStatus, long lastUpdateTs,
+			long lastUpdateTotal) throws JSONException {
+
+		JSONObject res = new JSONObject();
+		JSONArray dataArray = new JSONArray();
+		JSONObject dataToken;
+
+		long total = lastUpdateTotal;
 
 		boolean follower = initStatus;
-		boolean leader;
-		long leaderTs = 0;
 		long followerTs = lastUpdateTs;
 
-		long res = 0;
+		boolean leader;
+		long leaderTs = 0;
+
+		DB = DBHelper.getDBHelper(this);
+		Cursor log = DB.getCompleteLog();
 		log.moveToFirst();
 
-		if (log.getLong(1) - lastUpdateTs > 4000) {
-
-			follower = false;
-		}
-
-		log.moveToFirst();
 		while (log.getPosition() < log.getCount()) {
+
+			dataToken = new JSONObject();
 
 			leader = log.getInt(2) > 0;
 			leaderTs = log.getLong(1);
 
-			if (leader && follower) {
+			if (leaderTs - followerTs > LocalUpdateService.TIME_OUT_LIMIT
+					|| (!leader && !follower)) {
+				dataToken.put("value", "{\"total_time\":" + total + ","
+						+ "\"status\":" + Boolean.toString(leader) + "}");
+			} else if (leader && follower) {
 
-				res = res + (leaderTs - followerTs);
+				long delta = (1 / 2) * (leaderTs - followerTs);
+				total = total + delta;
+				dataToken.put("value", "{\"total_time\":" + total + ","
+						+ "\"status\":" + Boolean.toString(leader) + "}");
+			} else {
+				long delta = (leaderTs - followerTs);
+				total = total + delta;
+				dataToken.put("value", "{\"total_time\":" + total + ","
+						+ "\"status\":" + Boolean.toString(leader) + "}");
 			}
+			dataToken.put("date", leaderTs);
+			dataArray.put(dataToken);
+
 			follower = leader;
 			followerTs = leaderTs;
+
 			log.moveToNext();
 		}
+
+		res.put("data", dataArray);
 		return res;
 	}
 }

@@ -569,7 +569,7 @@ public class CommonSenseAdapter {
 	 * @throws JSONException
 	 * @throws IOException
 	 */
-	public int sendBeaconData(long timestamp, long totalTime, boolean status)
+	public int sendBeaconData(JSONObject dataPackage)
 			throws JSONException, IOException {
 
 		if (null == sAuthPrefs) {
@@ -586,16 +586,7 @@ public class CommonSenseAdapter {
 		int sensorId = (int) beaconSensor.getLong("id");
 		String url = Url.SENSORS_URL + "/" + sensorId + "/data";
 
-		String value = "{\"total_time\":" + totalTime + "," + "\"status\":"
-				+ status + "}";
-		JSONArray data = new JSONArray();
-
-		data.put(0, new JSONObject().put("date", timestamp).put("value", value));
-
-		JSONObject postData = new JSONObject();
-		postData.put("data", data);
-
-		Map<String, String> response = request(context, url, postData, cookie);
+		Map<String, String> response = request(context, url, dataPackage, cookie);
 
 		// check response code
 		String code = response.get(RESPONSE_CODE);
@@ -718,19 +709,8 @@ public class CommonSenseAdapter {
 		}
 	}
 
-	public JSONObject fetchTimeToday() throws IOException, JSONException {
+	public JSONObject fetchStatusBefore(long timeStamp) throws IOException, JSONException {
 
-		GregorianCalendar cCurrent = new GregorianCalendar();
-		
-		GregorianCalendar todayMidnight = new GregorianCalendar(
-				cCurrent.get(Calendar.YEAR),
-				cCurrent.get(Calendar.MONTH),
-				cCurrent.get(Calendar.DAY_OF_MONTH), 0, 0);
-		
-		todayMidnight.set(GregorianCalendar.HOUR, 0);
-		todayMidnight.set(GregorianCalendar.MINUTE, 0);
-		todayMidnight.set(GregorianCalendar.SECOND, 0);
-				
 		if (null == sAuthPrefs) {
 			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
 					Context.MODE_PRIVATE);
@@ -742,12 +722,10 @@ public class CommonSenseAdapter {
 
 		JSONObject beaconSensor = new JSONObject(beaconSensorString);
 
-		Log.e(TAG, "todayMidnight: "+todayMidnight.getTimeInMillis() / 1000);
 		
 		int sensorId = (int) beaconSensor.getLong("id");
-		String url = Url.SENSORS_URL + "/" + sensorId + "/data"
-				+ "?end_date=" + todayMidnight.getTimeInMillis() / 1000
-				+ "&last=true";
+		String url = Url.SENSORS_URL + "/" + sensorId + "/data" + "?end_date="
+				+ timeStamp+ "&last=true";
 
 		Map<String, String> response = request(context, url, null, cookie);
 		String responseCode = response.get(RESPONSE_CODE);
@@ -762,38 +740,17 @@ public class CommonSenseAdapter {
 		if ("200".equals(responseCode)) {
 			Log.w(TAG, "Download successful: " + responseCode);
 
-			// parse response and store the list
-			JSONObject content = new JSONObject(response.get(RESPONSE_CONTENT));
-
-			if (content.getJSONArray("data").length() == 0) {
-				return null;
-			}
-			JSONArray dataList = content.getJSONArray("data");
-			return dataList.getJSONObject(0);
+			return new JSONObject(response.get(RESPONSE_CONTENT));
 		}
 
 		else {
 			Log.w(TAG, "responsecode: " + responseCode);
 			throw new IOException("Incorrect response from CommonSense: "
 					+ responseCode);
-		}
+		}	
 	}
 
-	public JSONObject fetchTimeThisWeek() throws IOException, JSONException {
-
-		GregorianCalendar cCurrent = new GregorianCalendar();
-		
-		GregorianCalendar c = new GregorianCalendar(
-				cCurrent.get(Calendar.YEAR),
-				cCurrent.get(Calendar.MONTH),
-				cCurrent.get(Calendar.DAY_OF_MONTH), 0, 0);
-		c.set(Calendar.DAY_OF_WEEK, 0);
-		
-		GregorianCalendar startWeekMidnight = new GregorianCalendar();
-		startWeekMidnight.set(GregorianCalendar.DAY_OF_WEEK, 1);
-		startWeekMidnight.set(GregorianCalendar.HOUR, 0);
-		startWeekMidnight.set(GregorianCalendar.MINUTE, 0);
-		startWeekMidnight.set(GregorianCalendar.SECOND, 0);
+	public JSONObject fetchStatusAfter(long timeStamp) throws IOException, JSONException {
 
 		if (null == sAuthPrefs) {
 			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
@@ -806,11 +763,10 @@ public class CommonSenseAdapter {
 
 		JSONObject beaconSensor = new JSONObject(beaconSensorString);
 
-		Log.d(TAG, "startWeekMidnight: "+startWeekMidnight.getTimeInMillis() / 1000);
 		
 		int sensorId = (int) beaconSensor.getLong("id");
-		String url = Url.SENSORS_URL + "/" + sensorId + "/data" + "?end_date="
-				+ startWeekMidnight.getTimeInMillis() / 1000 + "&last=true";
+		String url = Url.SENSORS_URL + "/" + sensorId + "/data" + "?start_date="
+				+ timeStamp+ "&page=0&per_page";
 
 		Map<String, String> response = request(context, url, null, cookie);
 		String responseCode = response.get(RESPONSE_CODE);
@@ -825,14 +781,7 @@ public class CommonSenseAdapter {
 		if ("200".equals(responseCode)) {
 			Log.w(TAG, "Download successful: " + responseCode);
 
-			// parse response and store the list
-			JSONObject content = new JSONObject(response.get(RESPONSE_CONTENT));
-
-			if (content.getJSONArray("data").length() == 0) {
-				return null;
-			}
-			JSONArray dataList = content.getJSONArray("data");
-			return dataList.getJSONObject(0);
+			return new JSONObject(response.get(RESPONSE_CONTENT));
 		}
 
 		else {
