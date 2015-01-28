@@ -585,6 +585,8 @@ public class CommonSenseAdapter {
 
 		int sensorId = (int) beaconSensor.getLong("id");
 		String url = Url.SENSORS_URL + "/" + sensorId + "/data";
+		
+		Log.e(TAG,dataPackage.toString(1));
 
 		Map<String, String> response = request(context, url, dataPackage, cookie);
 

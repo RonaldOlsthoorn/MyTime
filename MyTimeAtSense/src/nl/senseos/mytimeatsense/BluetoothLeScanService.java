@@ -24,7 +24,7 @@ public class BluetoothLeScanService extends Service {
 	private BluetoothManager mBluetoothManager;
 	private BluetoothAdapter mBluetoothAdapter;
 	// Stops scanning after 5 seconds.
-	public static final long SCAN_PERIOD = 5 * 1000l;
+	public static final long SCAN_PERIOD = 1 * 1000l;
 	private boolean beaconFound = false;
 	private boolean mScanning;
 	private Handler mHandler;
@@ -40,8 +40,7 @@ public class BluetoothLeScanService extends Service {
 		if(beaconFound){
 			intent.putExtra(SCAN_RESULT_MAJOR, proximity.getMajor());
 			intent.putExtra(SCAN_RESULT_MINOR, proximity.getMinor());			
-		}
-		
+		}	
 		startService(intent);
 	}
 	

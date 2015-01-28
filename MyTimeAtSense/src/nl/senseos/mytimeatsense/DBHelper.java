@@ -58,7 +58,7 @@ public class DBHelper extends SQLiteOpenHelper implements BaseColumns {
 		} catch (SQLException e) {
 			Log.d(TAG, "insertOrIgnore on " + values + " fail");
 		}
-		db.close();
+		//db.close();
 		return res;
 	}
 
@@ -77,7 +77,7 @@ public class DBHelper extends SQLiteOpenHelper implements BaseColumns {
 					+ id + " fail");
 			res = false;
 		}
-		db.close();
+		//db.close();
 		return res;
 	}
 

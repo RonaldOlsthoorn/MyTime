@@ -36,6 +36,9 @@ public class GlobalUpdateService extends IntentService {
 	protected void onHandleIntent(Intent intent) {
 
 		Log.v(TAG, "global update");
+		
+		DB = DBHelper.getDBHelper(this);
+		
 		authPrefs = getSharedPreferences(Auth.PREFS_CREDS, Context.MODE_PRIVATE);
 		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);
@@ -300,8 +303,11 @@ public class GlobalUpdateService extends IntentService {
 		boolean leader;
 		long leaderTs = 0;
 
-		DB = DBHelper.getDBHelper(this);
+		
 		Cursor log = DB.getCompleteLog();
+		Log.e(TAG,"Count: "+log.getCount());
+		Log.e(TAG,"Cursor isClosed: "+log.isClosed());
+		
 		log.moveToFirst();
 
 		while (log.getPosition() < log.getCount()) {
