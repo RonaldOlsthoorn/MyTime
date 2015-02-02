@@ -1,13 +1,10 @@
 package nl.senseos.mytimeatsense;
 
-import java.io.IOException;
-
-import org.json.JSONException;
 
 import nl.senseos.mytimeatsense.R;
 import nl.senseos.mytimeatsense.CommonSenseConstants.Auth;
 import nl.senseos.mytimeatsense.CommonSenseConstants.Sensors;
-import nl.senseos.mytimeatsense.DemanesConstants.Prefs;
+import nl.senseos.mytimeatsense.DemanesConstants.StatusPrefs;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -21,7 +18,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -56,8 +52,8 @@ public class PersonalOverviewActivity extends Activity {
 	private TextView status;
 	private View mProgressView;
 	private View mContentView;
-	public static final long REPEAT_INTEVAL_MINS_BLE = 1;
-	public static final long REPEAT_INTEVAL_MINS_UPLOAD = 5;
+	public static final long REPEAT_INTEVAL_MINS_BLE = 5;
+	public static final long REPEAT_INTEVAL_MINS_UPLOAD = 30;
 
 	private AlarmManager alarmMgr;
 	private SharedPreferences statusPrefs;
@@ -76,6 +72,7 @@ public class PersonalOverviewActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_personal_overview);
 
+		Log.e(TAG,"REPEAT_INTERVAL_MINS_BLE: "+ REPEAT_INTEVAL_MINS_BLE+"TIME_OUT_LIMIT: "+LocalUpdateService.TIME_OUT_LIMIT);
 	
 		// check if password/username is set
 		if (null == sAuthPrefs) {
@@ -124,7 +121,7 @@ public class PersonalOverviewActivity extends Activity {
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 		}
 
-		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
+		statusPrefs = getSharedPreferences(StatusPrefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);
 
 		todayHours = (TextView) findViewById(R.personal_overview.today_hour);
@@ -163,13 +160,15 @@ public class PersonalOverviewActivity extends Activity {
 		alarmMgr.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
 				SystemClock.elapsedRealtime() + (1 * 1000),
 				REPEAT_INTEVAL_MINS_UPLOAD * 60 * 1000,
-				GlobalUpdatePendingIntent);
+				GlobalUpdatePendingIntent);	
 
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		// User chose not to enable Bluetooth.
+		
+		
 		if (requestCode == REQUEST_ENABLE_BT
 				&& resultCode == Activity.RESULT_CANCELED) {
 			finish();
@@ -200,7 +199,7 @@ public class PersonalOverviewActivity extends Activity {
 				REPEAT_INTEVAL_MINS_UPLOAD * 60 * 1000,
 				GlobalUpdatePendingIntent);
 
-		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
+		statusPrefs = getSharedPreferences(StatusPrefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);
 
 		super.onActivityResult(requestCode, resultCode, data);
@@ -281,12 +280,12 @@ public class PersonalOverviewActivity extends Activity {
 			sensorEditor.commit();
 
 			SharedPreferences sStatusPrefs = getSharedPreferences(
-					Prefs.PREFS_STATUS, Context.MODE_PRIVATE);
+					StatusPrefs.PREFS_STATUS, Context.MODE_PRIVATE);
 			Editor statusEditor = sStatusPrefs.edit();
-			statusEditor.putBoolean(Prefs.STATUS_IN_OFFICE, false);
-			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, 0);
-			statusEditor.putLong(Prefs.STATUS_TIME_TODAY, 0);
-			statusEditor.putLong(Prefs.STATUS_TIME_WEEK, 0);
+			statusEditor.putBoolean(StatusPrefs.STATUS_IN_OFFICE, false);
+			statusEditor.putLong(StatusPrefs.STATUS_TOTAL_TIME, 0);
+			statusEditor.putLong(StatusPrefs.STATUS_TIME_TODAY, 0);
+			statusEditor.putLong(StatusPrefs.STATUS_TIME_WEEK, 0);
 			statusEditor.commit();
 
 			DBHelper DB = DBHelper.getDBHelper(this);
@@ -311,7 +310,7 @@ public class PersonalOverviewActivity extends Activity {
 	public void onResume() {
 		super.onResume(); // Always call the superclass method first
 
-		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
+		statusPrefs = getSharedPreferences(StatusPrefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);
 
 		todayHours = (TextView) findViewById(R.personal_overview.today_hour);
@@ -372,14 +371,14 @@ public class PersonalOverviewActivity extends Activity {
 
 		public void run() {
 
-			if (statusPrefs.getBoolean(Prefs.STATUS_IN_OFFICE, false)) {
+			if (statusPrefs.getBoolean(StatusPrefs.STATUS_IN_OFFICE, false)) {
 
 				status.setText("Status: in the sense office");
 				currentTimeInSeconds = System.currentTimeMillis() / 1000;
 				timeDifferenceSeconds = currentTimeInSeconds
-						- statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
+						- statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0);
 
-				displayTime = statusPrefs.getLong(Prefs.STATUS_TOTAL_TIME, 0)
+				displayTime = statusPrefs.getLong(StatusPrefs.STATUS_TOTAL_TIME, 0)
 						+ timeDifferenceSeconds;
 				days = (int) displayTime / (24 * 60 * 60);
 				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
@@ -393,7 +392,7 @@ public class PersonalOverviewActivity extends Activity {
 				thisLifeMinutes.setText(String.format("%02d", minutes));
 				thisLifeSeconds.setText(String.format("%02d", seconds));
 						
-				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0)
+				displayTime = statusPrefs.getLong(StatusPrefs.STATUS_TIME_WEEK, 0)
 						+ timeDifferenceSeconds;
 				days = (int) displayTime / (24 * 60 * 60);
 				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
@@ -408,7 +407,7 @@ public class PersonalOverviewActivity extends Activity {
 				thisWeekSeconds.setText(String.format("%02d", seconds));
 				
 				
-				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)
+				displayTime = statusPrefs.getLong(StatusPrefs.STATUS_TIME_TODAY, 0)
 						+ timeDifferenceSeconds;
 				days = (int) displayTime / (24 * 60 * 60);
 				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
@@ -425,7 +424,7 @@ public class PersonalOverviewActivity extends Activity {
 			} else {
 				status.setText("Status: not in the sense office");
 
-				displayTime = statusPrefs.getLong(Prefs.STATUS_TOTAL_TIME, 0);
+				displayTime = statusPrefs.getLong(StatusPrefs.STATUS_TOTAL_TIME, 0);
 				days = (int) displayTime / (24 * 60 * 60);
 				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
 				minutes = (int) (displayTime - days * (24 * 60 * 60) - hours
@@ -437,7 +436,7 @@ public class PersonalOverviewActivity extends Activity {
 				thisLifeMinutes.setText(String.format("%02d", minutes));
 				thisLifeSeconds.setText(String.format("%02d", seconds));
 				
-				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0);
+				displayTime = statusPrefs.getLong(StatusPrefs.STATUS_TIME_WEEK, 0);
 				days = (int) displayTime / (24 * 60 * 60);
 				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
 				minutes = (int) (displayTime - days * (24 * 60 * 60) - hours
@@ -449,7 +448,7 @@ public class PersonalOverviewActivity extends Activity {
 				thisWeekMinutes.setText(String.format("%02d", minutes));
 				thisWeekSeconds.setText(String.format("%02d", seconds));
 
-				displayTime = statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0);
+				displayTime = statusPrefs.getLong(StatusPrefs.STATUS_TIME_TODAY, 0);
 				days = (int) displayTime / (24 * 60 * 60);
 				hours = (int) (displayTime - 24 * 60 * 60 * days) / (60 * 60);
 				minutes = (int) (displayTime - days * (24 * 60 * 60) - hours

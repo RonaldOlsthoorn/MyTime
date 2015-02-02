@@ -4,7 +4,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-import nl.senseos.mytimeatsense.DemanesConstants.Prefs;
+import nl.senseos.mytimeatsense.DemanesConstants.StatusPrefs;
 import android.app.IntentService;
 import android.content.ContentValues;
 import android.content.Context;
@@ -17,7 +17,7 @@ import android.util.Log;
 public class LocalUpdateService extends IntentService {
 
 	private final static String TAG = IntentService.class.getSimpleName();
-	public static final long TIME_OUT_LIMIT = (2*PersonalOverviewActivity.REPEAT_INTEVAL_MINS_BLE*60);
+	public static final long TIME_OUT_LIMIT = (PersonalOverviewActivity.REPEAT_INTEVAL_MINS_BLE*60*2);
 	private DBHelper DB;
 	private boolean scanResult;
 	private long scanResultTS;
@@ -60,42 +60,42 @@ public class LocalUpdateService extends IntentService {
 
 		// update current state in shared preferences
 		statusPrefs = getSharedPreferences(
-				Prefs.PREFS_STATUS, Context.MODE_PRIVATE);
+				StatusPrefs.PREFS_STATUS, Context.MODE_PRIVATE);
 		Editor prefsEditor = statusPrefs.edit();
 		
-		prefsEditor.putBoolean(Prefs.STATUS_IN_OFFICE, scanResult);
-		prefsEditor.putLong(Prefs.STATUS_TIMESTAMP, scanResultTS);
-		prefsEditor.putLong(Prefs.STATUS_TOTAL_TIME, getTotalTimeUpdate());
-		prefsEditor.putLong(Prefs.STATUS_TIME_WEEK, getThisWeekTimeUpdate());
-		prefsEditor.putLong(Prefs.STATUS_TIME_TODAY, getTodayTimeUpdate());
+		prefsEditor.putBoolean(StatusPrefs.STATUS_IN_OFFICE, scanResult);
+		prefsEditor.putLong(StatusPrefs.STATUS_TIMESTAMP, scanResultTS);
+		prefsEditor.putLong(StatusPrefs.STATUS_TOTAL_TIME, getTotalTimeUpdate());
+		prefsEditor.putLong(StatusPrefs.STATUS_TIME_WEEK, getThisWeekTimeUpdate());
+		prefsEditor.putLong(StatusPrefs.STATUS_TIME_TODAY, getTodayTimeUpdate());
 		prefsEditor.commit();
 
 	}
 
 	public long getTotalTimeUpdate() {
 		
-		long previousScanResultTs = statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
-		boolean previousScanResult = statusPrefs.getBoolean(Prefs.STATUS_IN_OFFICE, false);
+		long previousScanResultTs = statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0);
+		boolean previousScanResult = statusPrefs.getBoolean(StatusPrefs.STATUS_IN_OFFICE, false);
 		
 		if(scanResultTS-previousScanResultTs>TIME_OUT_LIMIT ||(!previousScanResult && !scanResult)){
-			return statusPrefs.getLong(Prefs.STATUS_TOTAL_TIME, 0);
+			return statusPrefs.getLong(StatusPrefs.STATUS_TOTAL_TIME, 0);
 		}
 		if((!previousScanResult && scanResult) || (previousScanResult && !scanResult)){
 			
-			long delta = (1/2)*(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));
-			return statusPrefs.getLong(Prefs.STATUS_TOTAL_TIME, 0)+delta;
+			long delta = (1/2)*(scanResultTS-statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0));
+			return statusPrefs.getLong(StatusPrefs.STATUS_TOTAL_TIME, 0)+delta;
 		}		
-		long delta =(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));
-		return statusPrefs.getLong(Prefs.STATUS_TOTAL_TIME, 0)+delta;
+		long delta =(scanResultTS-statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0));
+		return statusPrefs.getLong(StatusPrefs.STATUS_TOTAL_TIME, 0)+delta;
 	}
 
 	public long getTodayTimeUpdate() {
 		
-		long previousScanResultTs = statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
-		boolean previousScanResult = statusPrefs.getBoolean(Prefs.STATUS_IN_OFFICE, false);
+		long previousScanResultTs = statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0);
+		boolean previousScanResult = statusPrefs.getBoolean(StatusPrefs.STATUS_IN_OFFICE, false);
 		
 		if(scanResultTS-previousScanResultTs>TIME_OUT_LIMIT ||(!previousScanResult && !scanResult)){
-			return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0);
+			return statusPrefs.getLong(StatusPrefs.STATUS_TIME_TODAY, 0);
 		}
 		
 		GregorianCalendar calMidnight = new GregorianCalendar();
@@ -117,22 +117,22 @@ public class LocalUpdateService extends IntentService {
 		}
 		else{
 			if((!previousScanResult && scanResult) || (previousScanResult && !scanResult)){
-				long delta = (1/2)*(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));
-				return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)+delta;
+				long delta = (1/2)*(scanResultTS-statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0));
+				return statusPrefs.getLong(StatusPrefs.STATUS_TIME_TODAY, 0)+delta;
 			}		
 	
-			long delta =(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));		
-			return statusPrefs.getLong(Prefs.STATUS_TIME_TODAY, 0)+delta;			
+			long delta =(scanResultTS-statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0));		
+			return statusPrefs.getLong(StatusPrefs.STATUS_TIME_TODAY, 0)+delta;			
 		}
 	}
 
 	public long getThisWeekTimeUpdate() {
 
-		long previousScanResultTs = statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
-		boolean previousScanResult = statusPrefs.getBoolean(Prefs.STATUS_IN_OFFICE, false);
+		long previousScanResultTs = statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0);
+		boolean previousScanResult = statusPrefs.getBoolean(StatusPrefs.STATUS_IN_OFFICE, false);
 		
 		if(scanResultTS-previousScanResultTs>TIME_OUT_LIMIT ||(!previousScanResult && !scanResult)){
-			return statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0);
+			return statusPrefs.getLong(StatusPrefs.STATUS_TIME_WEEK, 0);
 		}
 		
 		GregorianCalendar calMondayMidnight = new GregorianCalendar();
@@ -155,11 +155,11 @@ public class LocalUpdateService extends IntentService {
 		}
 		else{
 			if((!previousScanResult && scanResult) || (previousScanResult && !scanResult)){
-				long delta = (1/2)*(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));
-				return statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0)+delta;
+				long delta = (1/2)*(scanResultTS-statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0));
+				return statusPrefs.getLong(StatusPrefs.STATUS_TIME_WEEK, 0)+delta;
 			}		
-			long delta =(scanResultTS-statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0));
-			return statusPrefs.getLong(Prefs.STATUS_TIME_WEEK, 0)+delta;			
+			long delta =(scanResultTS-statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0));
+			return statusPrefs.getLong(StatusPrefs.STATUS_TIME_WEEK, 0)+delta;			
 		}
 	}
 }

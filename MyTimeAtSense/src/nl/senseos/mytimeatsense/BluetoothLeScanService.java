@@ -47,7 +47,6 @@ public class BluetoothLeScanService extends Service {
 	@Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, startId, startId);
-        Log.i("LocalService", "Received start id " + startId + ": " + intent);
         
         initialize();
 		scanLeDevice();

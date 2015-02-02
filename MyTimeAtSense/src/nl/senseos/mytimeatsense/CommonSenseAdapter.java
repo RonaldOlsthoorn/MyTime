@@ -333,8 +333,6 @@ public class CommonSenseAdapter {
 		}
 		postData.put("sensor", sensor);
 
-		Log.v(TAG, "postData: " + postData.toString(1));
-
 		// perform actual request
 		Map<String, String> response = request(context, url, postData, cookie);
 

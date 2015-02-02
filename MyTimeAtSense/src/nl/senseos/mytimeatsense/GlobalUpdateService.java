@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.GregorianCalendar;
 
 import nl.senseos.mytimeatsense.CommonSenseConstants.Auth;
-import nl.senseos.mytimeatsense.DemanesConstants.Prefs;
+import nl.senseos.mytimeatsense.DemanesConstants.StatusPrefs;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,7 +40,7 @@ public class GlobalUpdateService extends IntentService {
 		DB = DBHelper.getDBHelper(this);
 		
 		authPrefs = getSharedPreferences(Auth.PREFS_CREDS, Context.MODE_PRIVATE);
-		statusPrefs = getSharedPreferences(Prefs.PREFS_STATUS,
+		statusPrefs = getSharedPreferences(StatusPrefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);
 		String mEmail = authPrefs.getString(Auth.PREFS_CREDS_UNAME, null);
 		String mPassword = authPrefs.getString(Auth.PREFS_CREDS_PASSWORD, null);
@@ -93,9 +93,9 @@ public class GlobalUpdateService extends IntentService {
 			JSONObject response = cs.fetchTotalTime();
 
 			boolean localStatus = statusPrefs.getBoolean(
-					Prefs.STATUS_IN_OFFICE, false);
+					StatusPrefs.STATUS_IN_OFFICE, false);
 
-			long localTs = statusPrefs.getLong(Prefs.STATUS_TIMESTAMP, 0);
+			long localTs = statusPrefs.getLong(StatusPrefs.STATUS_TIMESTAMP, 0);
 
 			JSONObject dataPackage;
 
@@ -171,16 +171,15 @@ public class GlobalUpdateService extends IntentService {
 		try {
 			Editor statusEditor = statusPrefs.edit();
 
-			Log.e(TAG, valueCurrent.getString("value"));
 			long totalTime = new JSONObject(valueCurrent.getString("value"))
 					.getLong("total_time");
 			boolean statusCurrent = new JSONObject(
 					valueCurrent.getString("value")).getBoolean("status");
 			long timeStampCurrent = valueCurrent.getLong("date");
 
-			statusEditor.putLong(Prefs.STATUS_TOTAL_TIME, totalTime);
-			statusEditor.putBoolean(Prefs.STATUS_IN_OFFICE, statusCurrent);
-			statusEditor.putLong(Prefs.STATUS_TIMESTAMP, timeStampCurrent);
+			statusEditor.putLong(StatusPrefs.STATUS_TOTAL_TIME, totalTime);
+			statusEditor.putBoolean(StatusPrefs.STATUS_IN_OFFICE, statusCurrent);
+			statusEditor.putLong(StatusPrefs.STATUS_TIMESTAMP, timeStampCurrent);
 
 			long todayMidnight;
 
@@ -225,7 +224,7 @@ public class GlobalUpdateService extends IntentService {
 									.getTimeInMillis() / 1000));
 				}
 			}
-			statusEditor.putLong(Prefs.STATUS_TIME_TODAY, totalTime
+			statusEditor.putLong(StatusPrefs.STATUS_TIME_TODAY, totalTime
 					- todayMidnight);
 
 			long mondayMidnight;
@@ -235,7 +234,6 @@ public class GlobalUpdateService extends IntentService {
 				mondayMidnight = new JSONObject(valueAfterMondayMidnight
 						.getJSONArray("data").getJSONObject(0)
 						.getString("value")).getLong("total_time");
-				Log.e(TAG,"before empty "+mondayMidnight);
 			} else if (valueAfterMondayMidnight.getJSONArray("data").length() == 0) {
 
 				mondayMidnight = new JSONObject(valueBeforeMondayMidnight
@@ -278,7 +276,7 @@ public class GlobalUpdateService extends IntentService {
 				
 			}
 			
-			statusEditor.putLong(Prefs.STATUS_TIME_WEEK, totalTime
+			statusEditor.putLong(StatusPrefs.STATUS_TIME_WEEK, totalTime
 					- mondayMidnight);
 
 			statusEditor.commit();
@@ -302,11 +300,8 @@ public class GlobalUpdateService extends IntentService {
 
 		boolean leader;
 		long leaderTs = 0;
-
 		
 		Cursor log = DB.getCompleteLog();
-		Log.e(TAG,"Count: "+log.getCount());
-		Log.e(TAG,"Cursor isClosed: "+log.isClosed());
 		
 		log.moveToFirst();
 
@@ -319,6 +314,7 @@ public class GlobalUpdateService extends IntentService {
 
 			if (leaderTs - followerTs > LocalUpdateService.TIME_OUT_LIMIT
 					|| (!leader && !follower)) {
+				Log.e(TAG,"time out "+leaderTs+","+followerTs);
 				dataToken.put("value", "{\"total_time\":" + total + ","
 						+ "\"status\":" + Boolean.toString(leader) + "}");
 			} else if ((!leader && follower) ||(leader && !follower) ) {
