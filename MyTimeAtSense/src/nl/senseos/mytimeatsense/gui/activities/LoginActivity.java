@@ -1,4 +1,4 @@
-package nl.senseos.mytimeatsense;
+package nl.senseos.mytimeatsense.gui.activities;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -31,6 +31,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import nl.senseos.mytimeatsense.R;
+import nl.senseos.mytimeatsense.R.id;
+import nl.senseos.mytimeatsense.R.layout;
+import nl.senseos.mytimeatsense.R.string;
+import nl.senseos.mytimeatsense.commonsense.CommonSenseAdapter;
+
 import java.util.ArrayList;
 import java.util.List;
 

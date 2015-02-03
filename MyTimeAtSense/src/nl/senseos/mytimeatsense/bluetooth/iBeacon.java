@@ -1,4 +1,4 @@
-package nl.senseos.mytimeatsense;
+package nl.senseos.mytimeatsense.bluetooth;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;

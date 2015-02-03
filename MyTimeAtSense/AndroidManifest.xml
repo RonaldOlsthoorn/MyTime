@@ -24,12 +24,12 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".LoginActivity"
+            android:name="nl.senseos.mytimeatsense.gui.activities.LoginActivity"
             android:label="@string/title_activity_login"
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
         <activity
-            android:name=".PersonalOverviewActivity"
+            android:name="nl.senseos.mytimeatsense.gui.activities.PersonalOverviewActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,28 +38,20 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".BleAlarmReceiver" >
+        <receiver android:name="nl.senseos.mytimeatsense.bluetooth.BleAlarmReceiver" >
         </receiver>
 
-        <service android:name=".LocalUpdateService" >
+        <service android:name="nl.senseos.mytimeatsense.sync.LocalUpdateService" >
         </service>
-        <service android:name=".BluetoothLeScanService" >
-        </service>
-
-        <receiver android:name=".GlobalUpdateAlarmReceiver" >
-        </receiver>
-
-        <service android:name=".GlobalUpdateService" >
+        
+        <service android:name="nl.senseos.mytimeatsense.bluetooth.BluetoothLeScanService" >
         </service>
 
-        <activity
-            android:name=".GroupOverviewActivity"
-            android:label="@string/title_activity_group_overview" >
-        </activity>
-        <activity
-            android:name=".SelectGroupActivity"
-            android:label="@string/title_activity_select_group" >
-        </activity>
+        <receiver android:name="nl.senseos.mytimeatsense.sync.GlobalUpdateAlarmReceiver" >
+        </receiver>
+        <service android:name="nl.senseos.mytimeatsense.sync.GlobalUpdateService">
+        </service>
+
     </application>
 
 </manifest>

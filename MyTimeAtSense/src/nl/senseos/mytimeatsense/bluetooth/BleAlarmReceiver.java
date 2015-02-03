@@ -1,11 +1,11 @@
-package nl.senseos.mytimeatsense;
+ package nl.senseos.mytimeatsense.bluetooth;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-public class GlobalUpdateAlarmReceiver extends BroadcastReceiver{
+public class BleAlarmReceiver extends BroadcastReceiver{
 
 	private final static String TAG = BroadcastReceiver.class
 			.getSimpleName();
@@ -13,8 +13,9 @@ public class GlobalUpdateAlarmReceiver extends BroadcastReceiver{
 	@Override
 	public void onReceive(Context context, Intent intent) {
 
-		Log.d(TAG,"onReceive GlobalUpdate");
-		Intent mIntent = new Intent(context, GlobalUpdateService.class);
+		Log.d(TAG,"onReceive BLE");
+		Intent mIntent = new Intent(context, BluetoothLeScanService.class);
 		context.startService(mIntent);
 	}
+
 }

@@ -1,4 +1,4 @@
-package nl.senseos.mytimeatsense;
+package nl.senseos.mytimeatsense.util;
 
 public class DemanesConstants {
 

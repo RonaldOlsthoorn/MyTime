@@ -1,5 +1,6 @@
-package nl.senseos.mytimeatsense;
+package nl.senseos.mytimeatsense.bluetooth;
 
+import nl.senseos.mytimeatsense.sync.LocalUpdateService;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;

@@ -1,4 +1,4 @@
-package nl.senseos.mytimeatsense;
+package nl.senseos.mytimeatsense.storage;
 
 import android.content.ContentValues;
 import android.content.Context;

@@ -1,10 +1,13 @@
-package nl.senseos.mytimeatsense;
+package nl.senseos.mytimeatsense.sync;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-import nl.senseos.mytimeatsense.DemanesConstants.StatusPrefs;
+import nl.senseos.mytimeatsense.bluetooth.BluetoothLeScanService;
+import nl.senseos.mytimeatsense.gui.activities.PersonalOverviewActivity;
+import nl.senseos.mytimeatsense.storage.DBHelper;
+import nl.senseos.mytimeatsense.util.DemanesConstants.StatusPrefs;
 import android.app.IntentService;
 import android.content.ContentValues;
 import android.content.Context;

@@ -1,10 +1,12 @@
-package nl.senseos.mytimeatsense;
+package nl.senseos.mytimeatsense.sync;
 
 import java.io.IOException;
 import java.util.GregorianCalendar;
 
-import nl.senseos.mytimeatsense.CommonSenseConstants.Auth;
-import nl.senseos.mytimeatsense.DemanesConstants.StatusPrefs;
+import nl.senseos.mytimeatsense.commonsense.CommonSenseAdapter;
+import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Auth;
+import nl.senseos.mytimeatsense.storage.DBHelper;
+import nl.senseos.mytimeatsense.util.DemanesConstants.StatusPrefs;
 
 import org.json.JSONArray;
 import org.json.JSONException;

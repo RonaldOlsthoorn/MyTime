@@ -1,10 +1,18 @@
-package nl.senseos.mytimeatsense;
+package nl.senseos.mytimeatsense.gui.activities;
 
 
 import nl.senseos.mytimeatsense.R;
-import nl.senseos.mytimeatsense.CommonSenseConstants.Auth;
-import nl.senseos.mytimeatsense.CommonSenseConstants.Sensors;
-import nl.senseos.mytimeatsense.DemanesConstants.StatusPrefs;
+import nl.senseos.mytimeatsense.R.layout;
+import nl.senseos.mytimeatsense.R.menu;
+import nl.senseos.mytimeatsense.R.personal_overview;
+import nl.senseos.mytimeatsense.R.string;
+import nl.senseos.mytimeatsense.bluetooth.BleAlarmReceiver;
+import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Auth;
+import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Sensors;
+import nl.senseos.mytimeatsense.storage.DBHelper;
+import nl.senseos.mytimeatsense.sync.GlobalUpdateAlarmReceiver;
+import nl.senseos.mytimeatsense.sync.LocalUpdateService;
+import nl.senseos.mytimeatsense.util.DemanesConstants.StatusPrefs;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;

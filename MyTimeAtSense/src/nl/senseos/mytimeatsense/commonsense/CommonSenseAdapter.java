@@ -1,4 +1,4 @@
-package nl.senseos.mytimeatsense;
+package nl.senseos.mytimeatsense.commonsense;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -20,10 +20,10 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import nl.senseos.mytimeatsense.CommonSenseConstants.Auth;
-import nl.senseos.mytimeatsense.CommonSenseConstants.Sensors;
-import nl.senseos.mytimeatsense.CommonSenseConstants.SenseDataTypes;
-import nl.senseos.mytimeatsense.CommonSenseConstants.Url;
+import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Auth;
+import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.SenseDataTypes;
+import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Sensors;
+import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Url;
 
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.json.JSONArray;
