@@ -397,8 +397,9 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:text="Compare to your colleagues"
-            android:visibility="gone" />
+            android:onClick="toGroup"
+            android:text="Compare to your colleagues" />
+
     </RelativeLayout>
 
 </LinearLayout>

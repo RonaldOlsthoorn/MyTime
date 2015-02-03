@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.GregorianCalendar;
 
 import nl.senseos.mytimeatsense.commonsense.CommonSenseAdapter;
-import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Auth;
+import nl.senseos.mytimeatsense.util.DemanesConstants.Auth;
 import nl.senseos.mytimeatsense.storage.DBHelper;
 import nl.senseos.mytimeatsense.util.DemanesConstants.StatusPrefs;
 

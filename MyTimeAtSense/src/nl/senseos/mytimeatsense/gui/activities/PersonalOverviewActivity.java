@@ -2,13 +2,9 @@ package nl.senseos.mytimeatsense.gui.activities;
 
 
 import nl.senseos.mytimeatsense.R;
-import nl.senseos.mytimeatsense.R.layout;
-import nl.senseos.mytimeatsense.R.menu;
-import nl.senseos.mytimeatsense.R.personal_overview;
-import nl.senseos.mytimeatsense.R.string;
 import nl.senseos.mytimeatsense.bluetooth.BleAlarmReceiver;
-import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Auth;
-import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Sensors;
+import nl.senseos.mytimeatsense.util.DemanesConstants.Auth;
+import nl.senseos.mytimeatsense.util.DemanesConstants.Sensors;
 import nl.senseos.mytimeatsense.storage.DBHelper;
 import nl.senseos.mytimeatsense.sync.GlobalUpdateAlarmReceiver;
 import nl.senseos.mytimeatsense.sync.LocalUpdateService;
@@ -365,6 +361,11 @@ public class PersonalOverviewActivity extends Activity {
 		timerHandler.removeCallbacks(updateTimerThread);
 	}
 
+	public void toGroup(View view){
+		
+		Intent intent = new Intent(this, GroupOverviewActivity.class);
+		startActivity(intent);
+	}
 	private Handler timerHandler = new Handler();
 
 	private Runnable updateTimerThread = new Runnable() {

@@ -20,10 +20,11 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.net.ssl.HttpsURLConnection;
 
-import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Auth;
-import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.SenseDataTypes;
-import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Sensors;
-import nl.senseos.mytimeatsense.commonsense.CommonSenseConstants.Url;
+import nl.senseos.mytimeatsense.util.DemanesConstants.Auth;
+import nl.senseos.mytimeatsense.util.DemanesConstants.GroupPrefs;
+import nl.senseos.mytimeatsense.util.DemanesConstants.SenseDataTypes;
+import nl.senseos.mytimeatsense.util.DemanesConstants.Sensors;
+import nl.senseos.mytimeatsense.util.DemanesConstants.Url;
 
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.json.JSONArray;
@@ -44,6 +45,7 @@ import android.util.Log;
  */
 public class CommonSenseAdapter {
 
+	private static CommonSenseAdapter instance;
 	private static SharedPreferences sAuthPrefs;
 	private static SharedPreferences sMainPrefs;
 	private static final long CACHE_REFRESH = 1000l * 60 * 60; // 1 hour
@@ -221,7 +223,7 @@ public class CommonSenseAdapter {
 		String id = registerSensor(context, Sensors.BEACON_SENSOR_NAME,
 				Sensors.BEACON_SENSOR_DISPLAY_NAME,
 				Sensors.BEACON_SENSOR_DESCRIPTION,
-				CommonSenseConstants.SenseDataTypes.JSON_TIME_SERIES,
+				SenseDataTypes.JSON_TIME_SERIES,
 				"{\"total_time\":1,\"status\":false}", null, null);
 
 		if (id == null) {
@@ -790,6 +792,44 @@ public class CommonSenseAdapter {
 					+ responseCode);
 		}
 	}
+	
+	
+	public JSONObject fetchGroupResult() throws IOException, JSONException {
+
+		if (null == sAuthPrefs) {
+			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
+					Context.MODE_PRIVATE);
+		}
+
+		String cookie = sAuthPrefs.getString(Auth.LOGIN_COOKIE, null);
+		
+		
+		String url = Url.SENSORS_URL + "/" + GroupPrefs.GROUP_SENSOR_ID + "/data" + "?last=true";
+				
+		Map<String, String> response = request(context, url, null, cookie);
+		String responseCode = response.get(RESPONSE_CODE);
+
+		JSONObject result = new JSONObject();
+
+		if ("403".equalsIgnoreCase(responseCode)) {
+			Log.w(TAG,
+					"CommonSense authentication while downloading data Response: forbidden!");
+
+		}
+		if ("200".equals(responseCode)) {
+			Log.w(TAG, "Download successful: " + responseCode);
+			
+			return new JSONObject(response.get(RESPONSE_CONTENT));
+		}
+
+		else {
+			Log.w(TAG, "responsecode: " + responseCode);
+			throw new IOException("Incorrect response from CommonSense: "
+					+ responseCode);
+		}
+	}
+	
+	
 
 	/**
 	 * Performs request at CommonSense API. Returns the response code, content,
