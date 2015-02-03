@@ -61,7 +61,7 @@ public class PersonalOverviewActivity extends Activity {
 	private View mProgressView;
 	private View mContentView;
 	public static final long REPEAT_INTEVAL_MINS_BLE = 5;
-	public static final long REPEAT_INTEVAL_MINS_UPLOAD = 30;
+	public static final long REPEAT_INTEVAL_MINS_UPLOAD = 31;
 
 	private AlarmManager alarmMgr;
 	private SharedPreferences statusPrefs;
