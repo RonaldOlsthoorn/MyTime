@@ -299,6 +299,10 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 				if (res != 0) {
 					return false;
 				}
+				res = cs.getUserInfo();
+				if (res != 0) {
+					return false;
+				}
 				cs.logout();
 				return true;
 
@@ -324,8 +328,7 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 					getParent().setResult(Activity.RESULT_OK, intent);
 				}
 				finish();
-			} 
-			else {
+			} else {
 				mPasswordView
 						.setError(getString(R.string.error_incorrect_password));
 				mPasswordView.requestFocus();

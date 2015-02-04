@@ -15,6 +15,7 @@ import nl.senseos.mytimeatsense.R.id;
 import nl.senseos.mytimeatsense.R.layout;
 import nl.senseos.mytimeatsense.R.menu;
 import nl.senseos.mytimeatsense.commonsense.CommonSenseAdapter;
+import nl.senseos.mytimeatsense.util.DemanesConstants.GroupPrefs;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -120,6 +121,10 @@ public class GroupOverviewActivity extends Activity {
 				Log.e(TAG,"login result: "+res);
 				
 				if(res==0){
+					
+					if(!cs.isGroupMember(GroupPrefs.GROUP_ID)){
+						cs.joinGroup(GroupPrefs.GROUP_ID);
+					}
 					response = cs.fetchGroupResult();	
 					result = new JSONArray(response.getJSONArray("data")
 							.getJSONObject(0).getString("value"));

@@ -31,6 +31,8 @@ public class DemanesConstants {
 
 		public static final String GROUP_PASSWORD = "87f95196987d8c3bf339e2a52be957f4";
 
+		public static final int PAGE_SIZE = 1000;
+
 	}
 	
 	/**
@@ -68,6 +70,8 @@ public class DemanesConstants {
 	    public static final String SENSOR_DEVICE_URL = API_URL + "sensors/%1/device";
 	    public static final String LOGIN_URL = API_URL+"login";
 	    public static final String LOGOUT_URL = API_URL+"logout";
+	    public static final String GROUP_URL = API_URL+"groups";
+	    public static final String CURRENT_USER_URL = API_URL+"users/current";
 	    
 	}
 	
@@ -124,5 +128,8 @@ public class DemanesConstants {
          * @see SensePrefs#AUTH_PREFS
          */
         public static final String DEVICE_TYPE = "device_type";
+        
+        public static final String USER_ID = "user_id";
+        
 	}
 }

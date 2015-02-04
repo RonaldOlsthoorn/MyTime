@@ -167,7 +167,7 @@ public class CommonSenseAdapter {
 			// request fresh list of sensors for this device from CommonSense
 			String cookie = sAuthPrefs.getString(Auth.LOGIN_COOKIE, null);
 
-			String url = Url.SENSORS_URL;
+			String url = Url.SENSORS_URL+"?page="+page+"&per_page="+Sensors.PAGE_SIZE;
 			Map<String, String> response = request(context, url, null, cookie);
 
 			String responseCode = response.get(RESPONSE_CODE);
@@ -418,6 +418,123 @@ public class CommonSenseAdapter {
 		// return the new sensor ID
 		return id;
 	}
+	
+	public boolean isGroupMember(int groupId) throws JSONException, IOException{
+		
+		if (null == sAuthPrefs) {
+			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
+					Context.MODE_PRIVATE);
+		}
+
+		boolean done = false;
+		JSONArray result = new JSONArray();
+		int page = 0;
+		
+		while (!done) {
+			// request fresh list of groups for this device from CommonSense
+			String cookie = sAuthPrefs.getString(Auth.LOGIN_COOKIE, null);
+
+			String url = Url.GROUP_URL+"?page="+page+"&per_page="+GroupPrefs.PAGE_SIZE;
+			Map<String, String> response = request(context, url, null, cookie);
+
+			String responseCode = response.get(RESPONSE_CODE);
+			if (!"200".equals(responseCode)) {
+				Log.w(TAG, "Failed to get list of sensors! Response code: "
+						+ responseCode);
+				throw new IOException("Incorrect response from CommonSense: "
+						+ responseCode);
+			}
+
+			// parse response and store the list
+			JSONObject content = new JSONObject(response.get(RESPONSE_CONTENT));
+			JSONArray groupList = content.getJSONArray("groups");
+
+			// put the group list in the result array
+			for (int i = 0; i < groupList.length(); i++) {
+				if(groupList.getJSONObject(i).getInt("id")==groupId){			
+					return true;
+				}
+			}
+
+			if (groupList.length() < Sensors.PAGE_SIZE) {
+				// all groups received
+				done = true;
+			} else {
+				// get the next page
+				page++;
+			}
+		}
+		return false;
+	}
+
+	public int joinGroup(int groupId) throws JSONException, IOException {
+
+		if (null == sAuthPrefs) {
+			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
+					Context.MODE_PRIVATE);
+		}
+
+		String cookie = sAuthPrefs.getString(Auth.LOGIN_COOKIE, null);
+		String url = Url.GROUP_URL;
+
+		String beaconSensorString = sAuthPrefs.getString(Sensors.BEACON_SENSOR,
+				null);
+		JSONObject beaconSensor = new JSONObject(beaconSensorString);
+		int sensorId = (int) beaconSensor.getLong("id");
+
+		JSONObject user = new JSONObject();
+		user.put(
+				"user",
+				new JSONObject().put("id", sAuthPrefs.getInt(Auth.USER_ID, -1))
+						.put("username",
+								sAuthPrefs.getString(Auth.PREFS_CREDS_UNAME,
+										null)));
+
+		JSONArray sensors = new JSONArray().put(sensorId);
+		user.put("sensors", sensors);
+
+		JSONObject displayInfo = new JSONObject();
+		displayInfo.put("show_username", 1);
+		displayInfo.put("show_id", 1);
+		user.put("display_user_info", displayInfo);
+
+		JSONObject permissions = new JSONObject();
+		permissions.put("add_sensors", 1);
+		permissions.put("list_sensors", 1);
+		permissions.put("list_users", 1);
+		permissions.put("remove_sensors", 0);
+		permissions.put("edit_group", 0);
+		permissions.put("add_users", 0);
+		user.put("group_permissions", permissions);
+		
+		user.put("access_password", GroupPrefs.GROUP_PASSWORD);
+
+		JSONObject postData = new JSONObject();
+		postData.put("users", new JSONArray().put(user));
+
+		Map<String, String> response = request(context, url, postData, cookie);
+
+		// check response code
+		String code = response.get(RESPONSE_CODE);
+
+		int result = -1;
+		if ("403".equalsIgnoreCase(code)) {
+			Log.w(TAG,
+					"CommonSense authentication while uploading data Response: forbidden!");
+			result = -2;
+		}
+		if (!"201".equals(code)) {
+			Log.w(TAG, "Success: " + code);
+			result = -1;
+			throw new IOException("Incorrect response from CommonSense: "
+					+ code);
+		}
+		if ("201".equals(code)) {
+			Log.w(TAG, "Join group successful: " + code);
+			result = 0;
+		}
+		return result;
+	}
 
 	/**
 	 * login using the last used credentials.
@@ -559,6 +676,49 @@ public class CommonSenseAdapter {
 		return result;
 	}
 
+	public int getUserInfo() throws IOException, JSONException {
+
+		if (null == sAuthPrefs) {
+			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
+					Context.MODE_PRIVATE);
+		}
+
+		String cookie = sAuthPrefs.getString(Auth.LOGIN_COOKIE, null);
+		String url = Url.CURRENT_USER_URL;
+
+		Map<String, String> response = request(context, url, null, cookie);
+		String responseCode = response.get(RESPONSE_CODE);
+		
+		int result;
+
+		if ("403".equalsIgnoreCase(responseCode)) {
+			Log.w(TAG,
+					"CommonSense authentication while downloading user infot Response: forbidden!");
+			result= -2;
+		}
+		if ("200".equals(responseCode)) {
+			Log.w(TAG, "Download successful: " + responseCode);
+
+			// parse response and store the list
+			JSONObject content = new JSONObject(response.get(RESPONSE_CONTENT));
+			Log.e(TAG, content.toString(1));
+			JSONObject user = content.getJSONObject("user");
+			
+			Editor sAuthEditor = sAuthPrefs.edit();
+			sAuthEditor.putInt(Auth.USER_ID, user.getInt("id"));
+			sAuthEditor.commit();
+			
+			result= 0;
+		}
+
+		else {
+			Log.w(TAG, "responsecode: " + responseCode);
+			throw new IOException("Incorrect response from CommonSense: "
+					+ responseCode);
+		}
+		return result;
+	}
+
 	/**
 	 * 
 	 * @param beaconDetected
@@ -569,8 +729,8 @@ public class CommonSenseAdapter {
 	 * @throws JSONException
 	 * @throws IOException
 	 */
-	public int sendBeaconData(JSONObject dataPackage)
-			throws JSONException, IOException {
+	public int sendBeaconData(JSONObject dataPackage) throws JSONException,
+			IOException {
 
 		if (null == sAuthPrefs) {
 			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
@@ -585,10 +745,11 @@ public class CommonSenseAdapter {
 
 		int sensorId = (int) beaconSensor.getLong("id");
 		String url = Url.SENSORS_URL + "/" + sensorId + "/data";
-		
-		Log.e(TAG,dataPackage.toString(1));
 
-		Map<String, String> response = request(context, url, dataPackage, cookie);
+		Log.e(TAG, dataPackage.toString(1));
+
+		Map<String, String> response = request(context, url, dataPackage,
+				cookie);
 
 		// check response code
 		String code = response.get(RESPONSE_CODE);
@@ -711,7 +872,8 @@ public class CommonSenseAdapter {
 		}
 	}
 
-	public JSONObject fetchStatusBefore(long timeStamp) throws IOException, JSONException {
+	public JSONObject fetchStatusBefore(long timeStamp) throws IOException,
+			JSONException {
 
 		if (null == sAuthPrefs) {
 			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
@@ -724,10 +886,9 @@ public class CommonSenseAdapter {
 
 		JSONObject beaconSensor = new JSONObject(beaconSensorString);
 
-		
 		int sensorId = (int) beaconSensor.getLong("id");
 		String url = Url.SENSORS_URL + "/" + sensorId + "/data" + "?end_date="
-				+ timeStamp+ "&last=true";
+				+ timeStamp + "&last=true";
 
 		Map<String, String> response = request(context, url, null, cookie);
 		String responseCode = response.get(RESPONSE_CODE);
@@ -749,10 +910,11 @@ public class CommonSenseAdapter {
 			Log.w(TAG, "responsecode: " + responseCode);
 			throw new IOException("Incorrect response from CommonSense: "
 					+ responseCode);
-		}	
+		}
 	}
 
-	public JSONObject fetchStatusAfter(long timeStamp) throws IOException, JSONException {
+	public JSONObject fetchStatusAfter(long timeStamp) throws IOException,
+			JSONException {
 
 		if (null == sAuthPrefs) {
 			sAuthPrefs = context.getSharedPreferences(Auth.PREFS_CREDS,
@@ -765,10 +927,9 @@ public class CommonSenseAdapter {
 
 		JSONObject beaconSensor = new JSONObject(beaconSensorString);
 
-		
 		int sensorId = (int) beaconSensor.getLong("id");
-		String url = Url.SENSORS_URL + "/" + sensorId + "/data" + "?start_date="
-				+ timeStamp+ "&page=0&per_page";
+		String url = Url.SENSORS_URL + "/" + sensorId + "/data"
+				+ "?start_date=" + timeStamp + "&page=0&per_page";
 
 		Map<String, String> response = request(context, url, null, cookie);
 		String responseCode = response.get(RESPONSE_CODE);
@@ -792,8 +953,7 @@ public class CommonSenseAdapter {
 					+ responseCode);
 		}
 	}
-	
-	
+
 	public JSONObject fetchGroupResult() throws IOException, JSONException {
 
 		if (null == sAuthPrefs) {
@@ -802,10 +962,10 @@ public class CommonSenseAdapter {
 		}
 
 		String cookie = sAuthPrefs.getString(Auth.LOGIN_COOKIE, null);
-		
-		
-		String url = Url.SENSORS_URL + "/" + GroupPrefs.GROUP_SENSOR_ID + "/data" + "?last=true";
-				
+
+		String url = Url.SENSORS_URL + "/" + GroupPrefs.GROUP_SENSOR_ID
+				+ "/data" + "?last=true";
+
 		Map<String, String> response = request(context, url, null, cookie);
 		String responseCode = response.get(RESPONSE_CODE);
 
@@ -818,7 +978,7 @@ public class CommonSenseAdapter {
 		}
 		if ("200".equals(responseCode)) {
 			Log.w(TAG, "Download successful: " + responseCode);
-			
+
 			return new JSONObject(response.get(RESPONSE_CONTENT));
 		}
 
@@ -828,8 +988,6 @@ public class CommonSenseAdapter {
 					+ responseCode);
 		}
 	}
-	
-	
 
 	/**
 	 * Performs request at CommonSense API. Returns the response code, content,
