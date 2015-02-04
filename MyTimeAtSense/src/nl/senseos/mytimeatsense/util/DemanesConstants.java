@@ -25,7 +25,7 @@ public class DemanesConstants {
 
 		public static final int GROUP_ID = 17335;
 		
-		public static final int GROUP_SENSOR_ID = 670539;
+		public static final int GROUP_SENSOR_ID = 799301;
 
 		public static final String GROUP_NAME = "Demanes";
 

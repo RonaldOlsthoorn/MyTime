@@ -98,7 +98,7 @@ public class GroupOverviewActivity extends Activity {
 	}
 
 	private class DownloadGroupOverviewTask extends
-			AsyncTask<Void, Void, JSONObject> {
+			AsyncTask<Void, Void, JSONArray> {
 
 		@Override
 		protected void onPreExecute() {
@@ -106,12 +106,12 @@ public class GroupOverviewActivity extends Activity {
 		}
 
 		@Override
-		protected JSONObject doInBackground(Void... params) {
+		protected JSONArray doInBackground(Void... params) {
 
 			CommonSenseAdapter cs = new CommonSenseAdapter(
 					GroupOverviewActivity.this);
 
-			JSONObject result;
+			JSONArray result;
 			try {
 				
 				JSONObject response;
@@ -121,7 +121,7 @@ public class GroupOverviewActivity extends Activity {
 				
 				if(res==0){
 					response = cs.fetchGroupResult();	
-					result = new JSONObject(response.getJSONArray("data")
+					result = new JSONArray(response.getJSONArray("data")
 							.getJSONObject(0).getString("value"));
 					cs.logout();
 				}else{
@@ -140,7 +140,7 @@ public class GroupOverviewActivity extends Activity {
 		}
 
 		@Override
-		protected void onPostExecute(JSONObject result) {
+		protected void onPostExecute(JSONArray result) {
 
 			if(result==null){
 				showProgress(false);
@@ -149,18 +149,16 @@ public class GroupOverviewActivity extends Activity {
 			
 			ArrayList<Map<String, String>> list = new ArrayList<Map<String, String>>(
 					result.length());
-			JSONArray names = result.names();
-
 			SimpleAdapter adapter;
 
 			try {
 
 				for (int i = 0; i < result.length(); i++) {
+					JSONObject member = result.getJSONObject(i);
 					HashMap<String, String> item = new HashMap<String, String>();
 					
-					item.put("name", toUsername(names.getString(0)));
-					String[] timeInstance = toDisplayTime(result.getInt(names
-							.getString(0)));
+					item.put("name",member.getString("user_name"));
+					String[] timeInstance = toDisplayTime(member.getInt("total_time"));
 					item.put("day", timeInstance[0]);
 					item.put("hour", timeInstance[1]);
 					item.put("minute", timeInstance[2]);
@@ -182,15 +180,6 @@ public class GroupOverviewActivity extends Activity {
 			}
 
 			showProgress(false);
-		}
-
-		private String toUsername(String name) {
-			
-			String res = name;
-			for (int i=0;i<4;i++){
-				res=res.substring(res.indexOf("-")+1);
-			}
-			return res;
 		}
 
 		private String[] toDisplayTime(int timeInSec) {
