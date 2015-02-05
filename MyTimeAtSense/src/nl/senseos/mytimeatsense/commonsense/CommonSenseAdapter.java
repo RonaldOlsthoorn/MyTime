@@ -475,7 +475,7 @@ public class CommonSenseAdapter {
 		}
 
 		String cookie = sAuthPrefs.getString(Auth.LOGIN_COOKIE, null);
-		String url = Url.GROUP_URL;
+		String url = Url.GROUP_URL+"/"+groupId+"/users";
 
 		String beaconSensorString = sAuthPrefs.getString(Sensors.BEACON_SENSOR,
 				null);
@@ -511,6 +511,8 @@ public class CommonSenseAdapter {
 
 		JSONObject postData = new JSONObject();
 		postData.put("users", new JSONArray().put(user));
+		
+		Log.e(TAG, postData.toString(1));
 
 		Map<String, String> response = request(context, url, postData, cookie);
 
@@ -524,7 +526,7 @@ public class CommonSenseAdapter {
 			result = -2;
 		}
 		if (!"201".equals(code)) {
-			Log.w(TAG, "Success: " + code);
+			Log.w(TAG, "Error: " + code);
 			result = -1;
 			throw new IOException("Incorrect response from CommonSense: "
 					+ code);
@@ -534,6 +536,10 @@ public class CommonSenseAdapter {
 			result = 0;
 		}
 		return result;
+	}
+	
+	public void runGroupUpdate(int groupId){
+		
 	}
 
 	/**
