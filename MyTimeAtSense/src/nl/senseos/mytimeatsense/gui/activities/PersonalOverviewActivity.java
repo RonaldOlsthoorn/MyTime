@@ -148,7 +148,7 @@ public class PersonalOverviewActivity extends Activity {
 
 		status = (TextView) findViewById(R.personal_overview.status);
 
-		mProgressView = findViewById(R.personal_overview.fetch_progress);
+		mProgressView = findViewById(R.personal_overview.progress_bar);
 		mContentView = findViewById(R.personal_overview.content);
 		mButton = findViewById(R.personal_overview.to_group);
 
@@ -364,7 +364,7 @@ public class PersonalOverviewActivity extends Activity {
 		thisLifeMinutes = (TextView) findViewById(R.personal_overview.this_life_minute);
 		thisLifeSeconds = (TextView) findViewById(R.personal_overview.this_life_second);
 
-		mProgressView = findViewById(R.personal_overview.fetch_progress);
+		mProgressView = findViewById(R.personal_overview.progress_bar);
 		mContentView = findViewById(R.personal_overview.content);
 		mButton = findViewById(R.personal_overview.to_group);
 		
