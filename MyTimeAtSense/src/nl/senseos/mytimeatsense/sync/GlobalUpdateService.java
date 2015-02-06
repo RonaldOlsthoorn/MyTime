@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.GregorianCalendar;
 
 import nl.senseos.mytimeatsense.commonsense.CommonSenseAdapter;
+import nl.senseos.mytimeatsense.commonsense.MsgHandler;
 import nl.senseos.mytimeatsense.util.DemanesConstants.Auth;
 import nl.senseos.mytimeatsense.storage.DBHelper;
 import nl.senseos.mytimeatsense.util.DemanesConstants.StatusPrefs;
@@ -18,6 +19,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.database.Cursor;
+import android.os.Handler;
 import android.util.Log;
 
 public class GlobalUpdateService extends IntentService {
@@ -44,48 +46,60 @@ public class GlobalUpdateService extends IntentService {
 		authPrefs = getSharedPreferences(Auth.PREFS_CREDS, Context.MODE_PRIVATE);
 		statusPrefs = getSharedPreferences(StatusPrefs.PREFS_STATUS,
 				Context.MODE_PRIVATE);
-		String mEmail = authPrefs.getString(Auth.PREFS_CREDS_UNAME, null);
-		String mPassword = authPrefs.getString(Auth.PREFS_CREDS_PASSWORD, null);
-
-		if (mEmail == null || mPassword == null) {
-			Log.v(TAG, "no creds, return");
-			return;
-		}
-
-		// login to commonsense
-		Log.v(TAG, "try to login...");
+		
 		cs = new CommonSenseAdapter(this);
-		int loginSuccess = cs.login();
-		Log.v(TAG, "login success: " + loginSuccess);
+		
+		Handler updateHandler = new Handler(MsgHandler.getInstance().getLooper());
+		updateHandler.post(new GlobalUpdateRunnable());
+	}
+	
+	private class GlobalUpdateRunnable implements Runnable{
 
-		// login returns 0 if successful.
-		if (loginSuccess != 0) {
-			return;
-		}
+		@Override
+		public void run() {
+			String mEmail = authPrefs.getString(Auth.PREFS_CREDS_UNAME, null);
+			String mPassword = authPrefs.getString(Auth.PREFS_CREDS_PASSWORD, null);
 
-		// check if sensor is present
-		boolean sensorPresent = false;
-		try {
-			sensorPresent = cs.hasBeaconSensor();
-			// if not present, make one!
-			if (!sensorPresent) {
-				sensorPresent = cs.registerBeaconSensor();
+			if (mEmail == null || mPassword == null) {
+				Log.v(TAG, "no creds, return");
+				return;
 			}
-		} catch (IOException | JSONException e1) {
-			e1.printStackTrace();
-		}
 
-		if (sensorPresent) {
-			Log.v(TAG, "full CS sync");
-			fullSyncCS();
-		}
+			// login to commonsense
+			Log.v(TAG, "try to login...");
+			int loginSuccess = cs.login();
+			Log.v(TAG, "login success: " + loginSuccess);
 
-		// logout
-		try {
-			cs.logout();
-		} catch (IOException e) {
-			e.printStackTrace();
+			// login returns 0 if successful.
+			if (loginSuccess != 0) {
+				return;
+			}
+
+			// check if sensor is present
+			boolean sensorPresent = false;
+			try {
+				sensorPresent = cs.hasBeaconSensor();
+				// if not present, make one!
+				if (!sensorPresent) {
+					sensorPresent = cs.registerBeaconSensor();
+				}
+			} catch (IOException | JSONException e1) {
+				e1.printStackTrace();
+			}
+
+			if (sensorPresent) {
+				Log.v(TAG, "full CS sync");
+				fullSyncCS();
+			}
+
+			// logout
+			try {
+				cs.logout();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
+		
 	}
 
 	private void fullSyncCS() {

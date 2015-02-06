@@ -3,6 +3,7 @@ package nl.senseos.mytimeatsense.gui.activities;
 
 import nl.senseos.mytimeatsense.R;
 import nl.senseos.mytimeatsense.bluetooth.BleAlarmReceiver;
+import nl.senseos.mytimeatsense.commonsense.MsgHandler;
 import nl.senseos.mytimeatsense.util.DemanesConstants.Auth;
 import nl.senseos.mytimeatsense.util.DemanesConstants.Sensors;
 import nl.senseos.mytimeatsense.storage.DBHelper;
@@ -25,6 +26,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.Menu;
@@ -70,6 +72,8 @@ public class PersonalOverviewActivity extends Activity {
 	private Intent GlobalUpdateServiceIntent;
 	private PendingIntent GlobalUpdatePendingIntent;
 	private PendingIntent BlePendingIntent;
+	
+	private Handler logoutHandler;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -269,45 +273,70 @@ public class PersonalOverviewActivity extends Activity {
 			return true;
 		}
 		if (id == R.personal_overview.logout) {
+			
+			
+			MsgHandler messageThread = MsgHandler.getInstance();
+			
+			logoutHandler = new Handler(){
+				
+				@Override
+				public void handleMessage(Message msg){
+					onLogout();
+				}
+			};
+			
+			new Handler(messageThread.getLooper()).post(new Runnable(){
 
-			Editor authEditor = sAuthPrefs.edit();
-			authEditor.putString(Auth.PREFS_CREDS_UNAME, null);
-			authEditor.putString(Auth.PREFS_CREDS_PASSWORD, null);
-			authEditor.commit();
+				@Override
+				public void run() {
+					
+					Editor authEditor = sAuthPrefs.edit();
+					authEditor.putString(Auth.PREFS_CREDS_UNAME, null);
+					authEditor.putString(Auth.PREFS_CREDS_PASSWORD, null);
+					authEditor.commit();
 
-			SharedPreferences sSensorPrefs = getSharedPreferences(
-					Sensors.PREFS_SENSORS, Context.MODE_PRIVATE);
-			Editor sensorEditor = sAuthPrefs.edit();
-			sensorEditor.putLong(Sensors.SENSOR_LIST_COMPLETE_TIME, 0);
-			sensorEditor.putString(Sensors.SENSOR_LIST_COMPLETE, null);
-			sensorEditor.putString(Sensors.BEACON_SENSOR, null);
-			sensorEditor.commit();
+					SharedPreferences sSensorPrefs = getSharedPreferences(
+							Sensors.PREFS_SENSORS, Context.MODE_PRIVATE);
+					Editor sensorEditor = sAuthPrefs.edit();
+					sensorEditor.putLong(Sensors.SENSOR_LIST_COMPLETE_TIME, 0);
+					sensorEditor.putString(Sensors.SENSOR_LIST_COMPLETE, null);
+					sensorEditor.putString(Sensors.BEACON_SENSOR, null);
+					sensorEditor.commit();
 
-			SharedPreferences sStatusPrefs = getSharedPreferences(
-					StatusPrefs.PREFS_STATUS, Context.MODE_PRIVATE);
-			Editor statusEditor = sStatusPrefs.edit();
-			statusEditor.putBoolean(StatusPrefs.STATUS_IN_OFFICE, false);
-			statusEditor.putLong(StatusPrefs.STATUS_TOTAL_TIME, 0);
-			statusEditor.putLong(StatusPrefs.STATUS_TIME_TODAY, 0);
-			statusEditor.putLong(StatusPrefs.STATUS_TIME_WEEK, 0);
-			statusEditor.commit();
+					SharedPreferences sStatusPrefs = getSharedPreferences(
+							StatusPrefs.PREFS_STATUS, Context.MODE_PRIVATE);
+					Editor statusEditor = sStatusPrefs.edit();
+					statusEditor.putBoolean(StatusPrefs.STATUS_IN_OFFICE, false);
+					statusEditor.putLong(StatusPrefs.STATUS_TOTAL_TIME, 0);
+					statusEditor.putLong(StatusPrefs.STATUS_TIME_TODAY, 0);
+					statusEditor.putLong(StatusPrefs.STATUS_TIME_WEEK, 0);
+					statusEditor.commit();
 
-			DBHelper DB = DBHelper.getDBHelper(this);
-			DB.deleteAllRows(DBHelper.DetectionLog.TABLE_NAME);
+					DBHelper DB = DBHelper.getDBHelper(PersonalOverviewActivity.this);
+					DB.deleteAllRows(DBHelper.DetectionLog.TABLE_NAME);
 
-			alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-			alarmMgr.cancel(BlePendingIntent);
-			alarmMgr.cancel(GlobalUpdatePendingIntent);
+					Message m = Message.obtain();
+					logoutHandler.sendMessage(m);
+				}			
+			});
 
-			Toast t = Toast.makeText(this, "Logged out successfully",
-					Toast.LENGTH_LONG);
-			t.show();
-
-			Intent requestCredsIntent = new Intent(this, LoginActivity.class);
-			startActivityForResult(requestCredsIntent, REQUEST_CREDENTIALS);
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	private void onLogout() {
+		
+		alarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		alarmMgr.cancel(BlePendingIntent);
+		alarmMgr.cancel(GlobalUpdatePendingIntent);
+
+		Toast t = Toast.makeText(this, "Logged out successfully",
+				Toast.LENGTH_LONG);
+		t.show();
+
+		Intent requestCredsIntent = new Intent(this, LoginActivity.class);
+		startActivityForResult(requestCredsIntent, REQUEST_CREDENTIALS);
 	}
 
 	@Override

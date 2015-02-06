@@ -17,6 +17,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
@@ -35,7 +37,7 @@ import nl.senseos.mytimeatsense.R.id;
 import nl.senseos.mytimeatsense.R.layout;
 import nl.senseos.mytimeatsense.R.string;
 import nl.senseos.mytimeatsense.commonsense.CommonSenseAdapter;
-
+import nl.senseos.mytimeatsense.commonsense.MsgHandler;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +57,7 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 	private View mProgressView;
 	private View mLoginFormView;
 	private Button mEmailSignInButton;
+	private Handler mLoginHandler;
 
 	public String TAG = "LoginActivity";
 
@@ -162,8 +165,17 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 			// Show a progress spinner, and kick off a background task to
 			// perform the user login attempt.
 			showProgress(true);
-			mAuthTask = new UserLoginTask(email, password);
-			mAuthTask.execute((Void) null);
+			MsgHandler msgHandler = MsgHandler.getInstance();
+			mLoginHandler = new Handler(msgHandler.getLooper()){
+				@Override
+				public void handleMessage(Message inputMessage) {
+					LoginActivity.this.runOnUiThread(new PostExecuteRunnable(inputMessage.arg1==1));
+				}
+			};
+			
+			mLoginHandler.post(new UserLoginRunnable(email,password));
+//			mAuthTask = new UserLoginTask(email, password);
+//			mAuthTask.execute((Void) null);
 		}
 	}
 
@@ -268,6 +280,53 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 
 		mEmailView.setAdapter(adapter);
 	}
+	
+	public class UserLoginRunnable implements Runnable{
+		
+		private final String mEmail;
+		private final String mPassword;
+		
+		UserLoginRunnable(String email, String password){
+			
+			mEmail = email;
+			mPassword = password;
+		}
+
+		@Override
+		public void run() {
+			
+			Message msg = Message.obtain();
+			
+			try {
+				// login to commonsense. verfiy credentials only.
+				// email and password are stored in shared preferences.
+				CommonSenseAdapter cs = new CommonSenseAdapter(
+						LoginActivity.this);
+				int res = cs.login(mEmail, mPassword);
+				if (res != 0) {
+					msg.arg1=0;
+					mLoginHandler.sendMessage(msg);
+					return;
+				}
+				res = cs.getUserInfo();
+				if (res != 0) {
+					msg.arg1=0;
+					mLoginHandler.sendMessage(msg);
+					return;
+				}
+				cs.logout();
+				msg.arg1=1;
+				mLoginHandler.sendMessage(msg);
+
+			} catch (Exception e) {
+				Log.w(TAG, e);
+				msg.arg1=0;
+				mLoginHandler.sendMessage(msg);
+				return;
+			}
+		}
+		
+	}
 
 	/**
 	 * Represents an asynchronous login/registration task used to authenticate
@@ -335,6 +394,44 @@ public class LoginActivity extends Activity implements LoaderCallbacks<Cursor> {
 		protected void onCancelled() {
 			mAuthTask = null;
 			showProgress(false);
+		}
+	}
+	
+	private class PostExecuteRunnable implements Runnable{
+
+		private boolean result;
+		
+		public PostExecuteRunnable(boolean res){
+			result = res;
+		}
+		
+		@Override
+		public void run() {
+			onPostExecute(result);
+		}
+		
+	}
+	
+
+	protected void onPostExecute(final Boolean success) {
+		mAuthTask = null;
+		showProgress(false);
+
+		if (success) {
+
+			Intent intent = new Intent(LoginActivity.this,
+					PersonalOverviewActivity.class);
+
+			if (getParent() == null) {
+				setResult(Activity.RESULT_OK, intent);
+			} else {
+				getParent().setResult(Activity.RESULT_OK, intent);
+			}
+			finish();
+		} else {
+			mPasswordView
+					.setError(getString(R.string.error_incorrect_password));
+			mPasswordView.requestFocus();
 		}
 	}
 }

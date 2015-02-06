@@ -3,26 +3,17 @@ package nl.senseos.mytimeatsense.gui.activities;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import nl.senseos.mytimeatsense.R;
-import nl.senseos.mytimeatsense.R.id;
-import nl.senseos.mytimeatsense.R.layout;
-import nl.senseos.mytimeatsense.R.menu;
 import nl.senseos.mytimeatsense.commonsense.CommonSenseAdapter;
 import nl.senseos.mytimeatsense.commonsense.MsgHandler;
 import nl.senseos.mytimeatsense.util.DemanesConstants.GroupPrefs;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.annotation.TargetApi;
 import android.app.Activity;
-import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -49,9 +40,10 @@ public class GroupOverviewActivity extends Activity {
 		scoreList = (ListView) findViewById(R.compare_group.list_members);
 		progressBar = findViewById(R.compare_group.progress_bar);
 
-		MsgHandler msgHandler = MsgHandler.getInstance();
+		MsgHandler messageThread = MsgHandler.getInstance();
+		
 
-		groupHandler = new Handler(msgHandler.getLooper()) {
+		groupHandler = new Handler(messageThread.getLooper()) {
 			@Override
 			public void handleMessage(Message inputMessage) {
 				GroupOverviewActivity.this.runOnUiThread(new postExecute(inputMessage.obj));
@@ -112,97 +104,6 @@ public class GroupOverviewActivity extends Activity {
 					}
 				});
 
-	}
-
-	private class DownloadGroupOverviewTask extends
-			AsyncTask<Void, Void, JSONArray> {
-
-		@Override
-		protected void onPreExecute() {
-			showProgress(true);
-		}
-
-		@Override
-		protected JSONArray doInBackground(Void... params) {
-
-			CommonSenseAdapter cs = new CommonSenseAdapter(
-					GroupOverviewActivity.this);
-
-			JSONArray result;
-			try {
-
-				JSONObject response;
-
-				int res = cs.login();
-				Log.e(TAG, "login result: " + res);
-
-				if (res == 0) {
-
-					if (!cs.isGroupMember(GroupPrefs.GROUP_ID)) {
-						cs.joinGroup(GroupPrefs.GROUP_ID);
-					}
-					response = cs.fetchGroupResult();
-					result = new JSONArray(response.getJSONArray("data")
-							.getJSONObject(0).getString("value"));
-					cs.logout();
-				} else {
-
-					return null;
-				}
-
-			} catch (IOException e) {
-				e.printStackTrace();
-				return null;
-			} catch (JSONException e) {
-				e.printStackTrace();
-				return null;
-			}
-			return result;
-		}
-
-		@Override
-		protected void onPostExecute(JSONArray result) {
-
-			if (result == null) {
-				showProgress(false);
-				return;
-			}
-
-			ArrayList<Map<String, String>> list = new ArrayList<Map<String, String>>(
-					result.length());
-			SimpleAdapter adapter;
-
-			try {
-
-				for (int i = 0; i < result.length(); i++) {
-					JSONObject member = result.getJSONObject(i);
-					HashMap<String, String> item = new HashMap<String, String>();
-
-					item.put("name", member.getString("user_name"));
-					String[] timeInstance = toDisplayTime(member
-							.getInt("total_time"));
-					item.put("day", timeInstance[0]);
-					item.put("hour", timeInstance[1]);
-					item.put("minute", timeInstance[2]);
-					item.put("second", timeInstance[3]);
-					list.add(item);
-				}
-
-				adapter = new SimpleAdapter(GroupOverviewActivity.this, list,
-						R.layout.compare_row, new String[] { "name", "day",
-								"hour", "minute", "second" }, new int[] {
-								R.compare_row.username, R.compare_row.day,
-								R.compare_row.hour, R.compare_row.minute,
-								R.compare_row.second });
-
-				scoreList.setAdapter(adapter);
-
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-
-			showProgress(false);
-		}
 	}
 
 	private class downloadGroupOverview implements Runnable {
