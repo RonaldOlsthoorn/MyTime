@@ -42,7 +42,6 @@ public class GroupOverviewActivity extends Activity {
 
 		MsgHandler messageThread = MsgHandler.getInstance();
 		
-
 		groupHandler = new Handler(messageThread.getLooper()) {
 			@Override
 			public void handleMessage(Message inputMessage) {
@@ -209,15 +208,16 @@ public class GroupOverviewActivity extends Activity {
 				item.put("hour", timeInstance[1]);
 				item.put("minute", timeInstance[2]);
 				item.put("second", timeInstance[3]);
+				item.put("avg", Integer.toString(member.getInt("average_hours_per_week")));
 				list.add(item);
 			}
 
 			adapter = new SimpleAdapter(GroupOverviewActivity.this, list,
 					R.layout.compare_row, new String[] { "name", "day", "hour",
-							"minute", "second" }, new int[] {
+							"minute", "second", "avg" }, new int[] {
 							R.compare_row.username, R.compare_row.day,
 							R.compare_row.hour, R.compare_row.minute,
-							R.compare_row.second });
+							R.compare_row.second, R.compare_row.avg });
 
 			scoreList.setAdapter(adapter);
 

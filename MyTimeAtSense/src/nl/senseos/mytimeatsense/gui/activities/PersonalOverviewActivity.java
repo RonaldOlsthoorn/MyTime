@@ -1,6 +1,5 @@
 package nl.senseos.mytimeatsense.gui.activities;
 
-
 import nl.senseos.mytimeatsense.R;
 import nl.senseos.mytimeatsense.bluetooth.BleAlarmReceiver;
 import nl.senseos.mytimeatsense.commonsense.MsgHandler;
@@ -74,6 +73,7 @@ public class PersonalOverviewActivity extends Activity {
 	private PendingIntent BlePendingIntent;
 	
 	private Handler logoutHandler;
+	private View mButton;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -150,6 +150,7 @@ public class PersonalOverviewActivity extends Activity {
 
 		mProgressView = findViewById(R.personal_overview.fetch_progress);
 		mContentView = findViewById(R.personal_overview.content);
+		mButton = findViewById(R.personal_overview.to_group);
 
 		BleServiceIntent = new Intent(this, BleAlarmReceiver.class);
 		BlePendingIntent = PendingIntent.getBroadcast(this, 2,
@@ -231,6 +232,8 @@ public class PersonalOverviewActivity extends Activity {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
 			int shortAnimTime = getResources().getInteger(
 					android.R.integer.config_shortAnimTime);
+			
+			mButton.setVisibility(show ? View.GONE : View.VISIBLE); 
 
 			mContentView.setVisibility(show ? View.GONE : View.VISIBLE);
 			mContentView.animate().setDuration(shortAnimTime)
@@ -258,6 +261,7 @@ public class PersonalOverviewActivity extends Activity {
 			// and hide the relevant UI components.
 			mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
 			mContentView.setVisibility(show ? View.GONE : View.VISIBLE);
+			mButton.setVisibility(show ? View.GONE : View.VISIBLE); 
 		}
 	}
 
@@ -362,6 +366,7 @@ public class PersonalOverviewActivity extends Activity {
 
 		mProgressView = findViewById(R.personal_overview.fetch_progress);
 		mContentView = findViewById(R.personal_overview.content);
+		mButton = findViewById(R.personal_overview.to_group);
 		
 		status = (TextView) findViewById(R.personal_overview.status);
 
