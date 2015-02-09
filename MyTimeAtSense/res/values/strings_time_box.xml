@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+       
+    <string name="days">days</string>
+    <string name="hours">hh</string>
+    <string name="minutes">mm</string>
+    <string name="seconds">ss</string>
+    
+    
+</resources>

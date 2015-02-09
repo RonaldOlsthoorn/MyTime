@@ -91,7 +91,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:text="days"
+                    android:text="@string/days"
                     android:textAppearance="?android:attr/textAppearanceSmall" />
 
                 <TextView
@@ -104,7 +104,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:text="hh"
+                    android:text="@string/hours"
                     android:textAppearance="?android:attr/textAppearanceSmall" />
 
                 <TextView
@@ -117,7 +117,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:text="mm"
+                    android:text="@string/minutes"
                     android:textAppearance="?android:attr/textAppearanceSmall" />
 
                 <TextView
@@ -130,7 +130,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:text="ss"
+                    android:text="@string/seconds"
                     android:textAppearance="?android:attr/textAppearanceSmall" />
             </TableRow>
             
@@ -150,7 +150,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="right"
-                    android:text="Average: "
+                    android:text="@string/average"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
                 <TextView
