@@ -1020,7 +1020,7 @@ public class CommonSenseAdapter {
 		HashMap<String, String> result = new HashMap<String, String>();
 		try {
 
-			boolean compress = true;
+			boolean compress = false;
 
 			// open new URL connection channel.
 			URL url = new URL(urlString);
